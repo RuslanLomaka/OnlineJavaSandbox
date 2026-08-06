@@ -44,7 +44,7 @@ public class PageController {
 
     @GetMapping("/problems/arrays/bubble-sort")
     public String bubbleSort() {
-        return "bubble-sort";
+        return "arrays/bubble-sort";
     }
 
 }
