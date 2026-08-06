@@ -116,7 +116,7 @@ public class JavaRunnerService {
                     "256m",
 
                     "--cpus",
-                    "0.5",
+                    "1",
 
                     "--pids-limit",
                     "32",
