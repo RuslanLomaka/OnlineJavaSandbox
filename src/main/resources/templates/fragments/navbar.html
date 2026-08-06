@@ -8,28 +8,52 @@
      class="navbar">
 
     <div class="navbar-left">
-        <a th:href="@{/sandbox}" class="logo">
+
+        <a th:href="@{/}"
+           class="logo">
             Online Java
         </a>
 
         <a th:href="@{/sandbox}">
             Sandbox
         </a>
+
+        <a th:href="@{/problems}">
+            Problems
+        </a>
+
+        <a th:href="@{/problems/arrays}">
+            Arrays
+        </a>
+
+        <a th:href="@{/problems/collections}">
+            Collections
+        </a>
+
+        <a th:href="@{/problems/algorithms}">
+            Algorithms
+        </a>
+
     </div>
 
     <div class="navbar-right">
 
-        <span>
+        <span th:if="${username != null}">
             Logged in as
             <strong th:text="${username}">
                 GitHub user
             </strong>
         </span>
 
-        <form th:action="@{/logout}" method="post">
-            <button type="submit">
+        <form th:if="${username != null}"
+              th:action="@{/logout}"
+              method="post">
+
+            <button type="submit"
+                    class="logout-button">
                 Log out
             </button>
+
         </form>
 
     </div>

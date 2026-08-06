@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>Problems | Online Java</title>
+
+    <link rel="stylesheet"
+          th:href="@{/css/site.css}">
+</head>
+
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container">
+
+    <h1 class="page-title">
+        Java Problems
+    </h1>
+
+    <p class="page-description">
+        Choose a section and practise Java by solving
+        small programming problems.
+    </p>
+
+    <div class="section-grid">
+
+        <a class="section-card"
+           th:href="@{/problems/arrays}">
+
+            <h2>Arrays</h2>
+
+            <p>
+                Sorting, searching and manipulating
+                arrays of values.
+            </p>
+
+        </a>
+
+        <a class="section-card"
+           th:href="@{/problems/collections}">
+
+            <h2>Collections</h2>
+
+            <p>
+                Lists, sets, maps, queues and other
+                Java collection types.
+            </p>
+
+        </a>
+
+        <a class="section-card"
+           th:href="@{/problems/algorithms}">
+
+            <h2>Algorithms</h2>
+
+            <p>
+                Two pointers, sliding windows,
+                recursion and general algorithms.
+            </p>
+
+        </a>
+
+    </div>
+
+</main>
+
+</body>
+</html>

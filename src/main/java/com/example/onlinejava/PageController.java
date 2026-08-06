@@ -21,4 +21,29 @@ public class PageController {
 
         return "sandbox";
     }
+
+    @GetMapping("/problems")
+    public String problems() {
+        return "problems";
+    }
+
+    @GetMapping("/problems/arrays")
+    public String arrays() {
+        return "problems-arrays";
+    }
+
+    @GetMapping("/problems/collections")
+    public String collections() {
+        return "problems-collections";
+    }
+
+    @GetMapping("/problems/algorithms")
+    public String algorithms() {
+        return "problems-algorithms";
+    }
+
+    @GetMapping("/problems/arrays/bubble-sort")
+    public String bubbleSort() {
+        return "bubble-sort";
+    }
 }

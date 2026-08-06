@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>Array Problems | Online Java</title>
+
+    <link rel="stylesheet"
+          th:href="@{/css/site.css}">
+</head>
+
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container">
+
+    <h1 class="page-title">
+        Arrays
+    </h1>
+
+    <p class="page-description">
+        Problems involving array traversal,
+        sorting, searching and modification.
+    </p>
+
+    <h2>Sorting</h2>
+
+    <div class="problem-list">
+
+        <a class="problem-link"
+           th:href="@{/problems/arrays/bubble-sort}">
+
+            <span>Bubble Sort</span>
+
+            <span class="problem-difficulty">
+                Easy
+            </span>
+
+        </a>
+
+    </div>
+
+    <h2>Searching</h2>
+
+    <div class="empty-section">
+        No searching problems yet.
+    </div>
+
+    <h2>Manipulation</h2>
+
+    <div class="empty-section">
+        No array-manipulation problems yet.
+    </div>
+
+</main>
+
+</body>
+</html>
