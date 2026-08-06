@@ -18,31 +18,52 @@ public class JavaRunnerService {
 
     private static final int EXECUTION_TIMEOUT_SECONDS = 8;
 
+    private static final Path SANDBOX_ROOT =
+            Path.of("/tmp/online-java-runs");
+
     public String run(String sourceCode) {
         Path temporaryDirectory = null;
         String containerName = null;
 
         try {
             /*
-             * 1. Create a temporary folder on Windows.
+             * This directory is mounted into the Spring container
+             * from the Raspberry Pi host using compose.yaml.
              *
-             * Example:
-             * C:\Users\...\Temp\java-sandbox-123456\
+             * Pi host:
+             * /tmp/online-java-runs
+             *
+             * Spring container:
+             * /tmp/online-java-runs
+             *
+             * The identical path is important because the Docker
+             * daemon runs on the Pi host and must be able to find
+             * the temporary directory used as a bind mount.
              */
-            temporaryDirectory =
-                    Files.createTempDirectory("java-sandbox-");
+            Files.createDirectories(SANDBOX_ROOT);
 
             /*
-             * 2. Create the path:
+             * Create a unique directory for this execution.
              *
-             * C:\Users\...\Temp\java-sandbox-123456\Main.java
+             * Example:
+             * /tmp/online-java-runs/java-sandbox-123456/
+             */
+            temporaryDirectory =
+                    Files.createTempDirectory(
+                            SANDBOX_ROOT,
+                            "java-sandbox-"
+                    );
+
+            /*
+             * Create:
+             * /tmp/online-java-runs/java-sandbox-123456/Main.java
              */
             Path sourceFile =
                     temporaryDirectory.resolve("Main.java");
 
             /*
-             * 3. Turn the text received from the webpage
-             * into a real Main.java file.
+             * Write the source code received from the browser
+             * into a real Java source file.
              */
             Files.writeString(
                     sourceFile,
@@ -51,37 +72,30 @@ public class JavaRunnerService {
             );
 
             /*
-             * Docker's output will be written here.
-             * This avoids the process blocking if it prints
-             * more output than the process pipe can hold.
+             * Docker output is redirected into this host file.
+             * This prevents stdout or stderr from filling the
+             * process pipe and blocking the Java application.
              */
             Path outputFile =
                     temporaryDirectory.resolve("docker-output.txt");
 
             /*
              * Every execution gets a unique container name.
-             * This lets us forcibly remove the container
-             * if the execution reaches the timeout.
              */
             containerName =
                     "java-sandbox-" + UUID.randomUUID();
 
+            /*
+             * This path exists both inside the Spring container
+             * and on the Raspberry Pi host.
+             */
             String hostDirectory =
                     temporaryDirectory
                             .toAbsolutePath()
                             .toString();
 
             /*
-             * 4. Start a completely new Docker container.
-             *
-             * The Windows temporary directory becomes visible
-             * inside the container at /source.
-             *
-             * Host:
-             * C:\...\java-sandbox-123\Main.java
-             *
-             * Container:
-             * /source/Main.java
+             * Start a new disposable Docker container.
              */
             Process dockerProcess = new ProcessBuilder(
                     "docker",
@@ -129,7 +143,7 @@ public class JavaRunnerService {
                     "-c",
 
                     /*
-                     * These commands execute inside the container:
+                     * Commands executed inside the runner:
                      *
                      * 1. Copy Main.java from the read-only mount.
                      * 2. Enter the writable RAM-backed directory.
@@ -146,7 +160,7 @@ public class JavaRunnerService {
                     .start();
 
             /*
-             * 5. Wait for compilation and execution.
+             * Wait for compilation and execution.
              */
             boolean finished = dockerProcess.waitFor(
                     EXECUTION_TIMEOUT_SECONDS,
@@ -155,18 +169,20 @@ public class JavaRunnerService {
 
             if (!finished) {
                 /*
-                 * Killing the Docker CLI process alone may not be
-                 * enough, so we also remove the named container
-                 * in the finally block.
+                 * Kill the Docker CLI process.
+                 * The named container is also removed in finally.
                  */
                 dockerProcess.destroyForcibly();
-                dockerProcess.waitFor(2, TimeUnit.SECONDS);
+                dockerProcess.waitFor(
+                        2,
+                        TimeUnit.SECONDS
+                );
 
                 return "Execution timed out.";
             }
 
             /*
-             * 6. Read javac/java output produced by Docker.
+             * Read compiler and program output.
              */
             String output = Files.exists(outputFile)
                     ? Files.readString(
@@ -176,13 +192,13 @@ public class JavaRunnerService {
                     : "";
 
             /*
-             * Change paths such as:
+             * Simplify compiler paths.
              *
-             * /work/Main.java:5: error...
+             * Example:
+             * /work/Main.java:5: error
              *
-             * into:
-             *
-             * Main.java:5: error...
+             * becomes:
+             * Main.java:5: error
              */
             output = output.replaceAll(
                     "(?m)^.*[\\\\/]Main\\.java",
@@ -208,14 +224,13 @@ public class JavaRunnerService {
 
         } finally {
             /*
-             * If a timeout or error left the container running,
-             * forcibly remove it.
+             * Remove a container left behind after timeout
+             * or another unexpected error.
              */
             removeContainer(containerName);
 
             /*
-             * Delete Main.java and docker-output.txt
-             * from the Windows temporary folder.
+             * Delete Main.java and docker-output.txt.
              */
             deleteDirectory(temporaryDirectory);
         }
@@ -236,7 +251,10 @@ public class JavaRunnerService {
                     .redirectErrorStream(true)
                     .start();
 
-            cleanup.waitFor(3, TimeUnit.SECONDS);
+            cleanup.waitFor(
+                    3,
+                    TimeUnit.SECONDS
+            );
 
         } catch (IOException exception) {
             System.err.println(
