@@ -16,7 +16,7 @@ public class JavaRunnerService {
     private static final String DOCKER_IMAGE =
             "eclipse-temurin:21-jdk";
 
-    private static final int EXECUTION_TIMEOUT_SECONDS = 8;
+    private static final int EXECUTION_TIMEOUT_SECONDS = 100;
 
     private static final Path SANDBOX_ROOT =
             Path.of("/tmp/online-java-runs");
