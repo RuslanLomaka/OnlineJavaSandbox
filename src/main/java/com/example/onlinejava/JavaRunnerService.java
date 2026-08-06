@@ -107,9 +107,16 @@ public class JavaRunnerService {
                     "--rm",
 
                     "--network",
+                    "none",
+
+                    "--memory",
+                    "none",
+
+                    "--memory-swap",
+                    "none",
 
                     "--cpus",
-                    "1",
+                    "2",
 
                     "--pids-limit",
                     "32",
