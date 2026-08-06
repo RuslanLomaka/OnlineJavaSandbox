@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Java Runner</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #151515;
+            color: #eeeeee;
+            font-family: Consolas, monospace;
+        }
+
+        .container {
+            width: min(1100px, 94%);
+            margin: 30px auto;
+        }
+
+        h1 {
+            font-size: 22px;
+        }
+
+        #editor {
+            border: 1px solid #444;
+            min-height: 350px;
+        }
+
+        .cm-editor {
+            min-height: 350px;
+            font-size: 16px;
+        }
+
+        .cm-scroller {
+            overflow: auto;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 22px;
+            background: #2d7d46;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #369653;
+        }
+
+        #console {
+            margin-top: 20px;
+            min-height: 120px;
+            padding: 15px;
+            background: #080808;
+            border: 1px solid #444;
+            color: #73ff73;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+    </style>
+</head>
+
+<body>
+<div id="login">
+    <a href="/oauth2/authorization/github">
+        <button type="button">Connect with GitHub</button>
+    </a>
+</div>
+</body>
+</html>

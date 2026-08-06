@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<body>
+
+<nav th:fragment="navbar"
+     class="navbar">
+
+    <div class="navbar-left">
+        <a th:href="@{/sandbox}" class="logo">
+            Online Java
+        </a>
+
+        <a th:href="@{/sandbox}">
+            Sandbox
+        </a>
+    </div>
+
+    <div class="navbar-right">
+
+        <span>
+            Logged in as
+            <strong th:text="${username}">
+                GitHub user
+            </strong>
+        </span>
+
+        <form th:action="@{/logout}" method="post">
+            <button type="submit">
+                Log out
+            </button>
+        </form>
+
+    </div>
+
+</nav>
+
+</body>
+</html>
