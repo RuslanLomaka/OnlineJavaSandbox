@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <title>
+        Longest Substring Without Repeating Characters | Online Java
+    </title>
+
+    <link rel="stylesheet"
+          th:href="@{/css/site.css}">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+
+    <style>
+        .problem-layout {
+            display: grid;
+            grid-template-columns:
+                minmax(320px, 0.9fr)
+                minmax(520px, 1.4fr);
+            gap: 28px;
+            align-items: start;
+        }
+
+        .problem-description,
+        .solution-area {
+            padding: 24px;
+
+            background: #202020;
+            border: 1px solid #444;
+            border-radius: 7px;
+        }
+
+        .problem-description h1 {
+            margin-top: 0;
+            line-height: 1.3;
+        }
+
+        .problem-description h2 {
+            margin-top: 30px;
+            font-size: 19px;
+        }
+
+        .problem-description p,
+        .problem-description li {
+            color: #c5c5c5;
+            line-height: 1.65;
+        }
+
+        .difficulty {
+            display: inline-block;
+            margin-bottom: 18px;
+            color: #ffcf66;
+        }
+
+        .example,
+        .code-example {
+            margin-top: 12px;
+            padding: 14px;
+
+            background: #111111;
+            border: 1px solid #3d3d3d;
+            border-radius: 5px;
+
+            color: #eeeeee;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .complexity {
+            color: #73ff73;
+        }
+
+        .method-signature {
+            margin: 0;
+            padding: 12px;
+
+            background: #111111;
+            border: 1px solid #444;
+
+            color: #cccccc;
+            white-space: pre-wrap;
+        }
+
+        .method-signature.top {
+            border-bottom: none;
+        }
+
+        .method-signature.bottom {
+            border-top: none;
+        }
+
+        .editor-wrapper {
+            border: 1px solid #444;
+        }
+
+        .CodeMirror {
+            height: 390px;
+            font-family: Consolas, monospace;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        #runTestsButton {
+            margin-top: 16px;
+            padding: 11px 24px;
+
+            border: none;
+            border-radius: 5px;
+
+            background: #238636;
+            color: white;
+
+            font-family: inherit;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        #runTestsButton:hover {
+            background: #2ea043;
+        }
+
+        #runTestsButton:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #testConsole {
+            min-height: 230px;
+            margin-top: 15px;
+            padding: 16px;
+
+            background: #000000;
+            color: #dddddd;
+            border: 1px solid #444;
+
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .console-pass {
+            color: #62ff62;
+        }
+
+        .console-fail {
+            color: #ffad42;
+        }
+
+        .console-expected {
+            color: #ffd166;
+        }
+
+        .console-actual {
+            color: #ff8c69;
+        }
+
+        .console-compile-error {
+            color: #ff5f5f;
+        }
+
+        .console-runtime-error {
+            color: #ff65d8;
+        }
+
+        .console-stack-trace {
+            color: #b983ff;
+        }
+
+        .console-summary {
+            color: #66d9ff;
+            font-weight: bold;
+        }
+
+        .console-exit-success {
+            color: #62ff62;
+        }
+
+        .console-exit-failure {
+            color: #ff5f5f;
+        }
+
+        .console-information {
+            color: #bbbbbb;
+        }
+
+        @media (max-width: 950px) {
+            .problem-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container">
+
+    <div class="problem-layout">
+
+        <section class="problem-description">
+
+            <span class="difficulty">
+                Medium · Collections · HashMap
+            </span>
+
+            <h1>
+                Longest Substring Without Repeating Characters
+            </h1>
+
+            <p>
+                Find the length of the longest contiguous part
+                of the input string in which no Java
+                <code>char</code> occurs more than once.
+            </p>
+
+            <h2>What is a substring?</h2>
+
+            <p>
+                A substring is a continuous part of the original
+                string.
+            </p>
+
+            <div class="example">"bcd" is a substring of "abcde".
+
+                "ace" is not a substring because its characters
+                are not next to each other.</div>
+
+            <h2>Method</h2>
+
+            <div class="code-example">public static int longestUniqueLength(String text)</div>
+
+            <h2>Rules</h2>
+
+            <ul>
+                <li>
+                    Return <code>0</code> for
+                    <code>null</code>.
+                </li>
+
+                <li>
+                    Return <code>0</code> for an empty string.
+                </li>
+
+                <li>
+                    Spaces, punctuation and digits count as
+                    characters.
+                </li>
+
+                <li>
+                    Uppercase and lowercase letters are different.
+                </li>
+
+                <li>
+                    Do not generate every possible substring.
+                </li>
+
+                <li>
+                    Do not restart the search from every character.
+                </li>
+
+                <li>
+                    Aim for average
+                    <span class="complexity">O(n)</span>
+                    execution time.
+                </li>
+
+                <li>
+                    Prefer
+                    <code>HashMap&lt;Character, Integer&gt;</code>.
+                </li>
+            </ul>
+
+            <h2>Example 1</h2>
+
+            <div class="example">Input:
+                "abcabcbb"
+
+                Output:
+                3
+
+                Explanation:
+                "abc" is the longest substring without repeated
+                characters.</div>
+
+            <h2>Example 2</h2>
+
+            <div class="example">Input:
+                "bbbbb"
+
+                Output:
+                1</div>
+
+            <h2>Example 3</h2>
+
+            <div class="example">Input:
+                "pwwkew"
+
+                Output:
+                3
+
+                Explanation:
+                "wke" is a valid answer.</div>
+
+            <h2>Important edge case</h2>
+
+            <div class="example">Input:
+                "abba"
+
+                Output:
+                2
+
+                The left side of the current window must never
+                move backwards.</div>
+
+            <h2>Hints</h2>
+
+            <ol>
+                <li>
+                    Keep a left and right boundary for the current
+                    valid window.
+                </li>
+
+                <li>
+                    Move the right boundary through the string once.
+                </li>
+
+                <li>
+                    Store the most recent index of every character.
+                </li>
+
+                <li>
+                    When a repeated character is inside the current
+                    window, move the left boundary past its previous
+                    position.
+                </li>
+            </ol>
+
+            <h2>Expected complexity</h2>
+
+            <p>
+                Average time:
+                <span class="complexity">O(n)</span>
+            </p>
+
+            <p>
+                Additional memory:
+                <span class="complexity">O(k)</span>
+            </p>
+
+        </section>
+
+        <section class="solution-area">
+
+            <h2>Write your solution here</h2>
+
+            <p>
+                The required imports and smoke tests are added
+                automatically.
+            </p>
+
+            <pre class="method-signature top">public static int longestUniqueLength(String text) {</pre>
+
+            <div class="editor-wrapper">
+                <textarea id="solutionCode">    // Write your solution here
+
+    return 0;</textarea>
+            </div>
+
+            <pre class="method-signature bottom">}</pre>
+
+            <button id="runTestsButton"
+                    type="button">
+                Run tests
+            </button>
+
+            <h2>Test results</h2>
+
+            <pre id="testConsole">Waiting for your solution...</pre>
+
+        </section>
+
+    </div>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+
+<script>
+    const editor = CodeMirror.fromTextArea(
+        document.getElementById("solutionCode"),
+        {
+            mode: "text/x-java",
+            theme: "material-darker",
+
+            lineNumbers: true,
+            lineWrapping: true,
+
+            indentUnit: 4,
+            tabSize: 4,
+            indentWithTabs: false,
+
+            autoCloseBrackets: true,
+            matchBrackets: true,
+
+            extraKeys: {
+                "Ctrl-Enter": runTests,
+                "Cmd-Enter": runTests,
+
+                "Tab": function (codeMirror) {
+                    if (codeMirror.somethingSelected()) {
+                        codeMirror.indentSelection("add");
+                    } else {
+                        codeMirror.replaceSelection(
+                            "    ",
+                            "end"
+                        );
+                    }
+                }
+            }
+        }
+    );
+
+    const runTestsButton =
+        document.getElementById("runTestsButton");
+
+    const testConsole =
+        document.getElementById("testConsole");
+
+
+    function createCompleteJavaSource(solutionBody) {
+        return `import java.util.HashMap;
+import java.util.Map;
+
+public class Main {
+
+    public static int longestUniqueLength(String text) {
+${solutionBody}
+    }
+
+    private static int passedTests = 0;
+    private static int failedTests = 0;
+
+    public static void main(String[] args) {
+        runTest(
+                1,
+                "Typical repeated sequence",
+                "abcabcbb",
+                3
+        );
+
+        runTest(
+                2,
+                "Every character is the same",
+                "bbbbb",
+                1
+        );
+
+        runTest(
+                3,
+                "Window moves past earlier repeat",
+                "pwwkew",
+                3
+        );
+
+        runTest(
+                4,
+                "Empty string",
+                "",
+                0
+        );
+
+        runTest(
+                5,
+                "Null input",
+                null,
+                0
+        );
+
+        runTest(
+                6,
+                "One character",
+                "x",
+                1
+        );
+
+        runTest(
+                7,
+                "All characters are unique",
+                "abcdef",
+                6
+        );
+
+        runTest(
+                8,
+                "Repeat after unique prefix",
+                "abcddef",
+                4
+        );
+
+        runTest(
+                9,
+                "Repeat inside current window",
+                "abba",
+                2
+        );
+
+        runTest(
+                10,
+                "Spaces count as characters",
+                "a b c a",
+                3
+        );
+
+        runTest(
+                11,
+                "Uppercase and lowercase differ",
+                "aAbBcA",
+                5
+        );
+
+        runTest(
+                12,
+                "Digits and punctuation",
+                "1!2@1#",
+                5
+        );
+
+        runTest(
+                13,
+                "Longest window occurs at end",
+                "aabcde",
+                5
+        );
+
+        runTest(
+                14,
+                "Window must not move backward",
+                "tmmzuxt",
+                5
+        );
+
+        runTest(
+                15,
+                "Non-ASCII Java chars",
+                "你好吗你很",
+                4
+        );
+
+        runPerformanceSmokeTest(
+                16,
+                "Large-input performance smoke test"
+        );
+
+        runTest(
+                17,
+                "Do not discard reusable characters",
+                "abaca",
+                3
+        );
+
+        runTest(
+                18,
+                "Repeated char before current window",
+                "dvdf",
+                3
+        );
+
+        runTest(
+                19,
+                "Unique suffix after repetitions",
+                "aaaaabcdef",
+                6
+        );
+
+        runTest(
+                20,
+                "Whitespace variations",
+                "a\\\\tb a",
+                4
+        );
+
+        printSummary();
+
+        if (failedTests > 0) {
+            System.exit(1);
+        }
+    }
+
+    private static void runTest(
+            int number,
+            String description,
+            String input,
+            int expected
+    ) {
+        try {
+            int actual = longestUniqueLength(input);
+
+            if (actual == expected) {
+                passedTests++;
+
+                System.out.printf(
+                        "[PASS] Test %02d: %s%n",
+                        number,
+                        description
+                );
+
+            } else {
+                failedTests++;
+
+                System.out.printf(
+                        "[FAIL] Test %02d: %s%n",
+                        number,
+                        description
+                );
+
+                System.out.println(
+                        "       Expected: " + expected
+                );
+
+                System.out.println(
+                        "       Actual:   " + actual
+                );
+            }
+
+        } catch (Throwable error) {
+            failedTests++;
+
+            System.out.printf(
+                    "[ERROR] Test %02d: %s%n",
+                    number,
+                    description
+            );
+
+            System.out.printf(
+                    "        %s: %s%n",
+                    error.getClass().getSimpleName(),
+                    readableMessage(error)
+            );
+        }
+    }
+
+    private static void runPerformanceSmokeTest(
+            int number,
+            String description
+    ) {
+        final int inputLength = 30_000;
+        final long maximumExpectedMillis = 2_000;
+
+        StringBuilder input =
+                new StringBuilder(inputLength);
+
+        for (
+                int character = 1_000;
+                character < 1_000 + inputLength;
+                character++
+        ) {
+            input.append((char) character);
+        }
+
+        long started = System.nanoTime();
+
+        final int actual;
+
+        try {
+            actual =
+                    longestUniqueLength(input.toString());
+
+        } catch (Throwable error) {
+            failedTests++;
+
+            System.out.printf(
+                    "[ERROR] Test %02d: %s%n",
+                    number,
+                    description
+            );
+
+            System.out.printf(
+                    "        %s: %s%n",
+                    error.getClass().getSimpleName(),
+                    readableMessage(error)
+            );
+
+            return;
+        }
+
+        long elapsedMillis =
+                (System.nanoTime() - started)
+                        / 1_000_000;
+
+        boolean correct =
+                actual == inputLength;
+
+        boolean reasonablyFast =
+                elapsedMillis < maximumExpectedMillis;
+
+        if (correct && reasonablyFast) {
+            passedTests++;
+
+            System.out.printf(
+                    "[PASS] Test %02d: %s (%d ms)%n",
+                    number,
+                    description,
+                    elapsedMillis
+            );
+
+        } else {
+            failedTests++;
+
+            System.out.printf(
+                    "[FAIL] Test %02d: %s%n",
+                    number,
+                    description
+            );
+
+            System.out.println(
+                    "       Expected: " + inputLength
+            );
+
+            System.out.println(
+                    "       Actual:   " + actual
+            );
+
+            System.out.println(
+                    "       Time:     "
+                            + elapsedMillis
+                            + " ms"
+            );
+
+            if (correct && !reasonablyFast) {
+                System.out.println(
+                        "       Correct result, but execution "
+                                + "exceeded "
+                                + maximumExpectedMillis
+                                + " ms."
+                );
+
+                System.out.println(
+                        "       Check whether the algorithm "
+                                + "repeatedly rescans characters."
+                );
+            }
+        }
+    }
+
+    private static void printSummary() {
+        int totalTests =
+                passedTests + failedTests;
+
+        System.out.println();
+        System.out.println(
+                "===================================="
+        );
+
+        System.out.println("TEST SUMMARY");
+
+        System.out.println(
+                "===================================="
+        );
+
+        System.out.println(
+                "PASSED: " + passedTests
+        );
+
+        System.out.println(
+                "FAILED: " + failedTests
+        );
+
+        System.out.println(
+                "TOTAL:  " + totalTests
+        );
+
+        System.out.println(
+                "===================================="
+        );
+
+        if (failedTests == 0) {
+            System.out.println(
+                    "All smoke tests passed!"
+            );
+        }
+    }
+
+    private static String readableMessage(
+            Throwable error
+    ) {
+        return error.getMessage() == null
+                ? "(no message)"
+                : error.getMessage();
+    }
+}`;
+    }
+
+
+    function escapeHtml(text) {
+        return text
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;");
+    }
+
+
+    function formatConsoleOutput(output) {
+        return output
+            .split("\n")
+            .map(line => {
+                const safeLine =
+                    escapeHtml(line);
+
+                if (line.startsWith("[PASS]")) {
+                    return `<span class="console-pass">${safeLine}</span>`;
+                }
+
+                if (line.startsWith("[FAIL]")) {
+                    return `<span class="console-fail">${safeLine}</span>`;
+                }
+
+                if (
+                    line.trimStart()
+                        .startsWith("Expected:")
+                ) {
+                    return `<span class="console-expected">${safeLine}</span>`;
+                }
+
+                if (
+                    line.trimStart()
+                        .startsWith("Actual:")
+                ) {
+                    return `<span class="console-actual">${safeLine}</span>`;
+                }
+
+                if (
+                    line.includes("Main.java:")
+                    || line.includes("error:")
+                    || line.includes("errors")
+                ) {
+                    return `<span class="console-compile-error">${safeLine}</span>`;
+                }
+
+                if (
+                    line.startsWith("[ERROR]")
+                    || line.includes("Exception")
+                    || line.includes("OutOfMemoryError")
+                    || line.includes("StackOverflowError")
+                    || line.includes("RuntimeException")
+                ) {
+                    return `<span class="console-runtime-error">${safeLine}</span>`;
+                }
+
+                if (
+                    line.trimStart()
+                        .startsWith("at ")
+                ) {
+                    return `<span class="console-stack-trace">${safeLine}</span>`;
+                }
+
+                if (
+                    line.startsWith("PASSED:")
+                    || line.startsWith("FAILED:")
+                    || line.startsWith("TOTAL:")
+                    || line.includes("All smoke tests passed")
+                    || line.includes("TEST SUMMARY")
+                ) {
+                    return `<span class="console-summary">${safeLine}</span>`;
+                }
+
+                if (
+                    line.includes(
+                        "Process finished with exit code 0"
+                    )
+                ) {
+                    return `<span class="console-exit-success">${safeLine}</span>`;
+                }
+
+                if (
+                    line.includes(
+                        "Process finished with exit code"
+                    )
+                ) {
+                    return `<span class="console-exit-failure">${safeLine}</span>`;
+                }
+
+                return `<span class="console-information">${safeLine}</span>`;
+            })
+            .join("\n");
+    }
+
+
+    async function runTests() {
+        const solutionBody =
+            editor.getValue();
+
+        runTestsButton.disabled = true;
+
+        testConsole.textContent =
+            "Compiling and running tests...\n";
+
+        const completeSource =
+            createCompleteJavaSource(solutionBody);
+
+        try {
+            const response = await fetch(
+                "/sandbox/run",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "text/plain;charset=UTF-8"
+                    },
+
+                    body: completeSource
+                }
+            );
+
+            const output =
+                await response.text();
+
+            testConsole.innerHTML =
+                formatConsoleOutput(output);
+
+        } catch (error) {
+            testConsole.innerHTML =
+                `<span class="console-runtime-error">${
+                    escapeHtml(
+                        "Request failed:\n"
+                        + error.message
+                    )
+                }</span>`;
+
+        } finally {
+            runTestsButton.disabled = false;
+        }
+    }
+
+
+    runTestsButton.addEventListener(
+        "click",
+        runTests
+    );
+
+    editor.focus();
+</script>
+
+</body>
+</html>
