@@ -38,6 +38,12 @@ jobs:
         run: chmod +x mvnw
 
       - name: Run tests
+        env:
+          GITHUB_CLIENT_ID: test-client-id
+          GITHUB_CLIENT_SECRET: test-client-secret
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/online_java
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
         run: ./mvnw clean verify
 
   deploy:
