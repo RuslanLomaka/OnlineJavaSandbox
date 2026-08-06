@@ -14,16 +14,26 @@ public class SecurityConfig {
 
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/", "/index.html").permitAll()
-                        .requestMatchers("/sandbox", "/sandbox.html")
+                        .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/oauth2/**",
+                                "/login/**"
+                        )
+                        .permitAll()
+
+                        .anyRequest()
                         .authenticated()
-                        .anyRequest().authenticated()
                 )
+
                 .oauth2Login(oauth -> oauth
                         .defaultSuccessUrl("/sandbox", true)
                 )
+
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/sandbox/run")
+                        .ignoringRequestMatchers(
+                                "/sandbox/run"
+                        )
                 );
 
         return http.build();
