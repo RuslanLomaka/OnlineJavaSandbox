@@ -109,12 +109,6 @@ public class JavaRunnerService {
                     "--network",
                     "none",
 
-                    "--memory",
-                    "none",
-
-                    "--memory-swap",
-                    "none",
-
                     "--cpus",
                     "2",
 
