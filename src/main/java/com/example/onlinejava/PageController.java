@@ -47,4 +47,11 @@ public class PageController {
         return "arrays/bubble-sort";
     }
 
+    @GetMapping(
+            "/problems/collections/longest-unique-substring"
+    )
+    public String longestUniqueSubstring() {
+        return "collections/longest-unique-substring";
+    }
+
 }
