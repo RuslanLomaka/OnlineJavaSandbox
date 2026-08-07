@@ -1,6 +1,7 @@
 package com.example.onlinejava;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -18,8 +19,13 @@ public class JavaRunnerService {
 
     private static final int EXECUTION_TIMEOUT_SECONDS = 100;
 
-    private static final Path SANDBOX_ROOT =
-            Path.of("/tmp/online-java-runs");
+    private final Path sandboxRoot;
+
+    public JavaRunnerService(
+            @Value("${sandbox.root}") String sandboxRoot
+    ) {
+        this.sandboxRoot = Path.of(sandboxRoot);
+    }
 
     public String run(String sourceCode) {
         Path temporaryDirectory = null;
@@ -40,7 +46,7 @@ public class JavaRunnerService {
              * daemon runs on the Pi host and must be able to find
              * the temporary directory used as a bind mount.
              */
-            Files.createDirectories(SANDBOX_ROOT);
+            Files.createDirectories(sandboxRoot);
 
             /*
              * Create a unique directory for this execution.
@@ -50,7 +56,7 @@ public class JavaRunnerService {
              */
             temporaryDirectory =
                     Files.createTempDirectory(
-                            SANDBOX_ROOT,
+                            sandboxRoot,
                             "java-sandbox-"
                     );
 

@@ -14,10 +14,15 @@ public class PageController {
             @AuthenticationPrincipal OAuth2User user,
             Model model
     ) {
-        model.addAttribute(
-                "username",
-                user.getAttribute("login")
-        );
+        String username;
+
+        if (user == null) {
+            username = "Local developer";
+        } else {
+            username = user.getAttribute("login");
+        }
+
+        model.addAttribute("username", username);
 
         return "sandbox";
     }
