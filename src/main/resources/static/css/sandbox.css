@@ -1,0 +1,105 @@
+* {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #151515;
+            color: #eeeeee;
+            font-family: Consolas, monospace;
+        }
+
+        .navbar {
+            height: 60px;
+            padding: 0 30px;
+            background: #20242b;
+            border-bottom: 1px solid #414650;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-left,
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .navbar a {
+            color: #eeeeee;
+            text-decoration: none;
+        }
+
+        .navbar .logo {
+            font-size: 19px;
+            font-weight: bold;
+        }
+
+        .navbar button {
+            margin: 0;
+            padding: 8px 14px;
+            border: none;
+            border-radius: 5px;
+            background: #b83a3a;
+            color: white;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .container {
+            width: min(1100px, 94%);
+            margin: 30px auto;
+        }
+
+        .editor-wrapper {
+            border: 1px solid #555;
+        }
+
+        .CodeMirror {
+            height: 430px;
+            font-family: Consolas, monospace;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .CodeMirror-focused {
+            outline: 1px solid #777;
+        }
+
+        #runButton {
+            margin-top: 14px;
+            padding: 11px 24px;
+
+            border: none;
+            border-radius: 5px;
+
+            background: #238636;
+            color: white;
+
+            font-family: inherit;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        #runButton:hover {
+            background: #2ea043;
+        }
+
+        #runButton:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #console {
+            min-height: 180px;
+            padding: 16px;
+
+            background: #000000;
+            color: #62ff62;
+            border: 1px solid #444;
+
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }

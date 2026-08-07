@@ -1,0 +1,113 @@
+.problem-layout {
+            display: grid;
+            grid-template-columns: minmax(280px, 0.8fr) minmax(500px, 1.4fr);
+            gap: 28px;
+            align-items: start;
+        }
+
+        .problem-description,
+        .solution-area {
+            background: #202020;
+            border: 1px solid #444;
+            border-radius: 7px;
+            padding: 24px;
+        }
+
+        .problem-description h1 {
+            margin-top: 0;
+        }
+
+        .problem-description h2 {
+            margin-top: 28px;
+            font-size: 19px;
+        }
+
+        .problem-description p,
+        .problem-description li {
+            color: #c5c5c5;
+            line-height: 1.6;
+        }
+
+        .example {
+            padding: 14px;
+            margin-top: 12px;
+
+            background: #111111;
+            border: 1px solid #3d3d3d;
+            border-radius: 5px;
+
+            color: #eeeeee;
+            white-space: pre-wrap;
+        }
+
+        .difficulty {
+            display: inline-block;
+            margin-bottom: 18px;
+            color: #73ff73;
+        }
+
+        .method-signature {
+            padding: 12px;
+            margin-bottom: 0;
+
+            background: #111111;
+            border: 1px solid #444;
+            border-bottom: none;
+
+            color: #cccccc;
+            white-space: pre-wrap;
+        }
+
+        .editor-wrapper {
+            border: 1px solid #444;
+        }
+
+        .CodeMirror {
+            height: 360px;
+            font-family: Consolas, monospace;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        #runTestsButton {
+            margin-top: 16px;
+            padding: 11px 24px;
+
+            border: none;
+            border-radius: 5px;
+
+            background: #238636;
+            color: white;
+
+            font-family: inherit;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        #runTestsButton:hover {
+            background: #2ea043;
+        }
+
+        #runTestsButton:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+
+        #testConsole {
+            min-height: 200px;
+            margin-top: 15px;
+            padding: 16px;
+
+            background: #000000;
+            color: #62ff62;
+            border: 1px solid #444;
+
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 900px) {
+            .problem-layout {
+                grid-template-columns: 1fr;
+            }
+        }
