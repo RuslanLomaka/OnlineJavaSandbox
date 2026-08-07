@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Java Runner</title>
-
+    <title>Login</title>
     <style>
         * {
             box-sizing: border-box;
@@ -11,66 +10,53 @@
 
         body {
             margin: 0;
-            background: #151515;
+            background: #111111;
             color: #eeeeee;
             font-family: Consolas, monospace;
         }
 
-        .container {
-            width: min(1100px, 94%);
-            margin: 30px auto;
+        .login-page {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        h1 {
-            font-size: 22px;
+        .github-login-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 22px;
+            background: #24292f;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 1px solid #3d444d;
+            font-size: 18px;
+            font-weight: 600;
+            transition: background 0.2s ease, transform 0.15s ease, border-color 0.2s ease;
         }
 
-        #editor {
-            border: 1px solid #444;
-            min-height: 350px;
+        .github-login-btn:hover {
+            background: #2f363d;
+            border-color: #57606a;
+            transform: translateY(-1px);
         }
 
-        .cm-editor {
-            min-height: 350px;
-            font-size: 16px;
-        }
-
-        .cm-scroller {
-            overflow: auto;
-        }
-
-        button {
-            margin-top: 15px;
-            padding: 10px 22px;
-            background: #2d7d46;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-family: inherit;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #369653;
-        }
-
-        #console {
-            margin-top: 20px;
-            min-height: 120px;
-            padding: 15px;
-            background: #080808;
-            border: 1px solid #444;
-            color: #73ff73;
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
+        .github-icon {
+            width: 22px;
+            height: 22px;
         }
     </style>
 </head>
-
 <body>
-<div id="login">
-    <a href="/oauth2/authorization/github">
-        <button type="button">Connect with GitHub</button>
+<div class="login-page">
+    <a href="/oauth2/authorization/github" class="github-login-btn">
+        <svg class="github-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path fill="currentColor"
+                  d="M12 .5C5.65.5.5 5.65.5 12a11.5 11.5 0 0 0 7.86 10.92c.57.1.78-.25.78-.55v-2.15c-3.2.7-3.88-1.54-3.88-1.54-.52-1.33-1.27-1.69-1.27-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.75 1.18 1.75 1.18 1.02 1.75 2.67 1.24 3.32.95.1-.74.4-1.24.72-1.53-2.55-.29-5.23-1.27-5.23-5.67 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.45.11-3.02 0 0 .97-.31 3.19 1.17a11.06 11.06 0 0 1 5.8 0c2.22-1.48 3.19-1.17 3.19-1.17.62 1.57.23 2.73.11 3.02.73.8 1.18 1.82 1.18 3.07 0 4.41-2.69 5.38-5.25 5.66.41.35.77 1.03.77 2.08v3.08c0 .3.21.66.79.55A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/>
+        </svg>
+        <span>Login with GitHub</span>
     </a>
 </div>
 </body>
