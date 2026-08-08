@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -81,6 +82,11 @@ public class JavaRunnerService {
                     sourceFile,
                     sourceCode,
                     StandardCharsets.UTF_8
+            );
+
+            makeSourceReadableByRunner(
+                    temporaryDirectory,
+                    sourceFile
             );
 
             /*
@@ -280,6 +286,26 @@ public class JavaRunnerService {
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    private void makeSourceReadableByRunner(
+            Path temporaryDirectory,
+            Path sourceFile
+    ) throws IOException {
+        if (!Files.getFileStore(sourceFile)
+                .supportsFileAttributeView("posix")) {
+            return;
+        }
+
+        Files.setPosixFilePermissions(
+                temporaryDirectory,
+                PosixFilePermissions.fromString("rwxr-xr-x")
+        );
+
+        Files.setPosixFilePermissions(
+                sourceFile,
+                PosixFilePermissions.fromString("rw-r--r--")
+        );
     }
 
     private void deleteDirectory(Path directory) {
