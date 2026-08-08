@@ -208,7 +208,67 @@ You can start with something small:
 
 You do not need to configure the full production environment just to contribute an idea or problem.
 
-## Local setup
+## Development mode
+
+Development mode is available for contributors who want to run and change the project locally without configuring PostgreSQL, GitHub OAuth credentials, an `.env` file or a production deployment.
+
+### Requirements
+
+- Git;
+- JDK 17 or newer; JDK 21 is recommended;
+- Docker Engine or Docker Desktop;
+- IntelliJ IDEA or another Java IDE.
+
+### Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/RuslanLomaka/OnlineJavaSandbox.git
+cd OnlineJavaSandbox
+```
+
+Download the Java runner image before starting the application:
+
+```bash
+docker pull eclipse-temurin:21-jdk
+```
+
+Verify that Docker works without `sudo`:
+
+```bash
+docker ps
+```
+
+On Linux, if Docker reports a socket permission error, add your user to the Docker group:
+
+```bash
+sudo usermod -aG docker "$USER"
+```
+
+Log out and back in before continuing so the new group membership takes effect.
+
+### Run with IntelliJ IDEA
+
+1. Open the project in IntelliJ IDEA.
+2. Select JDK 21 as the project SDK.
+3. Open the `OnlineJavaApplication` run configuration.
+4. Set **Active profiles** to `dev`.
+5. Run `OnlineJavaApplication`.
+6. Open `http://localhost:8080/sandbox`.
+
+Development mode:
+
+- bypasses GitHub login;
+- does not connect to PostgreSQL;
+- disables template and static-resource caching;
+- binds the web server to `127.0.0.1`;
+- runs submitted Java code in restricted Docker containers;
+- disables networking inside runner containers.
+
+Development mode is intended for trusted local machines. Stop the application when you are finished working.
+
+## Production-like local setup
 
 ```bash
 git clone https://github.com/RuslanLomaka/OnlineJavaSandbox.git
