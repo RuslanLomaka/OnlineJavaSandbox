@@ -137,9 +137,11 @@ public class JavaRunnerService {
                     "--tmpfs",
                     "/work:rw,nosuid,size=64m",
 
+                    "--entrypoint",
+                    "sh",
+
                     DOCKER_IMAGE,
 
-                    "sh",
                     "-c",
 
                     /*
