@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -20,11 +22,15 @@ public class JavaRunnerService {
     private static final int EXECUTION_TIMEOUT_SECONDS = 100;
 
     private final Path sandboxRoot;
+    private final boolean noNewPrivileges;
 
     public JavaRunnerService(
-            @Value("${sandbox.root}") String sandboxRoot
+            @Value("${sandbox.root}") String sandboxRoot,
+            @Value("${sandbox.no-new-privileges:true}")
+            boolean noNewPrivileges
     ) {
         this.sandboxRoot = Path.of(sandboxRoot);
+        this.noNewPrivileges = noNewPrivileges;
     }
 
     public String run(String sourceCode) {
@@ -103,7 +109,7 @@ public class JavaRunnerService {
             /*
              * Start a new disposable Docker container.
              */
-            Process dockerProcess = new ProcessBuilder(
+            List<String> dockerCommand = new ArrayList<>(List.of(
                     "docker",
                     "run",
 
@@ -122,10 +128,15 @@ public class JavaRunnerService {
                     "32",
 
                     "--cap-drop",
-                    "ALL",
+                    "ALL"
+            ));
 
-                    "--security-opt",
-                    "no-new-privileges",
+            if (noNewPrivileges) {
+                dockerCommand.add("--security-opt");
+                dockerCommand.add("no-new-privileges");
+            }
+
+            dockerCommand.addAll(List.of(
 
                     "--read-only",
 
@@ -156,7 +167,9 @@ public class JavaRunnerService {
                             + " && cd /work"
                             + " && javac Main.java"
                             + " && java Main"
-            )
+            ));
+
+            Process dockerProcess = new ProcessBuilder(dockerCommand)
                     .redirectErrorStream(true)
                     .redirectOutput(outputFile.toFile())
                     .start();
