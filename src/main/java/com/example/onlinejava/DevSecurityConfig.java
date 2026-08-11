@@ -6,20 +6,33 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Security configuration active under the {@code dev} profile, allowing all
+ * requests without authentication for local development.
+ */
 @Configuration
 @Profile("dev")
 public class DevSecurityConfig {
 
-    @Bean
-    public SecurityFilterChain devSecurityFilterChain(HttpSecurity http)
-            throws Exception {
+  /**
+   * Builds a permissive security filter chain that permits all requests
+   * and disables CSRF protection, for local development only.
+   *
+   * @param http the security configuration builder
+   * @return the configured filter chain
+   * @throws Exception if the security configuration cannot be built
+   */
+  @Bean
+  public SecurityFilterChain devSecurityFilterChain(HttpSecurity http)
+      throws Exception {
 
-        http
-                .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().permitAll()
-                )
-                .csrf(csrf -> csrf.disable());
+    http
+        .authorizeHttpRequests(authorize -> authorize
+            .anyRequest()
+            .permitAll()
+        )
+        .csrf(csrf -> csrf.disable());
 
-        return http.build();
-    }
+    return http.build();
+  }
 }
