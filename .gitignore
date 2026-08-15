@@ -16,6 +16,9 @@ target/
 ### SECRETS ###
 .env
 
+### Local IDE MCP config ###
+.mcp.json
+
 ### IntelliJ IDEA ###
 .idea/*
 !.idea/codeStyles

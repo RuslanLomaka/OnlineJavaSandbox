@@ -85,7 +85,7 @@ public class JavaRunnerService {
    * security measures:
    * <ul>
    *   <li>No network access</li>
-   *   <li>Limited CPU and process count</li>
+   *   <li>Limited CPU, memory, and process count</li>
    *   <li>All capabilities dropped</li>
    *   <li>Read-only filesystem with limited writable tmpfs</li>
    *   <li>Optional no-new-privileges security option</li>
@@ -149,7 +149,8 @@ public class JavaRunnerService {
 
     List<String> dockerCommand = new ArrayList<>(
         List.of("docker", "run", "--name", containerName, "--rm", "--network", "none", "--cpus",
-            "2", "--pids-limit", "32", "--cap-drop", "ALL"));
+            "2", "--memory", "512m", "--memory-swap", "512m", "--pids-limit", "32", "--cap-drop",
+            "ALL"));
 
     if (noNewPrivileges) {
       dockerCommand.add("--security-opt");
