@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,33 @@ public class JavaRunnerService {
    * the container will be forcibly terminated.
    */
   private static final int EXECUTION_TIMEOUT_SECONDS = 100;
+
+  /**
+   * The maximum number of bytes of combined stdout/stderr output that
+   * will be captured from a single execution. Output beyond this
+   * limit causes the container to be killed early.
+   */
+  private static final long MAX_OUTPUT_BYTES = 1_048_576;
+
+  /**
+   * How often, in milliseconds, the running container's output file
+   * size is polled to enforce {@value #MAX_OUTPUT_BYTES}.
+   */
+  private static final long OUTPUT_WATCH_INTERVAL_MILLIS = 200;
+
+  /**
+   * The maximum number of Docker sandbox executions allowed to run at
+   * the same time. Chosen to match how many {@code --cpus 2}
+   * containers the host can run without CPU contention. Requests
+   * beyond this limit wait their turn rather than being rejected.
+   */
+  private static final int MAX_CONCURRENT_EXECUTIONS = 2;
+
+  /**
+   * Bounds how many executions run concurrently. Acquired before a
+   * container starts and released once it finishes.
+   */
+  private final Semaphore executionSlots = new Semaphore(MAX_CONCURRENT_EXECUTIONS);
 
   /**
    * The root directory path where temporary sandbox execution
@@ -72,6 +100,9 @@ public class JavaRunnerService {
    *       environment</li>
    *   <li>Writes the source code to a Main.java file</li>
    *   <li>Sets appropriate file permissions for the source file</li>
+   *   <li>Waits for a free execution slot if
+   *       {@value #MAX_CONCURRENT_EXECUTIONS} executions are already
+   *       running</li>
    *   <li>Starts a sandboxed Docker container with resource limits
    *       and security constraints</li>
    *   <li>Compiles and executes the Java code inside the
@@ -86,6 +117,7 @@ public class JavaRunnerService {
    * <ul>
    *   <li>No network access</li>
    *   <li>Limited CPU, memory, and process count</li>
+   *   <li>Captured output capped at {@value #MAX_OUTPUT_BYTES} bytes</li>
    *   <li>All capabilities dropped</li>
    *   <li>Read-only filesystem with limited writable tmpfs</li>
    *   <li>Optional no-new-privileges security option</li>
@@ -117,7 +149,12 @@ public class JavaRunnerService {
 
       List<String> dockerCommand = buildDockerCommand(temporaryDirectory, containerName);
 
-      return executeDockerCommand(dockerCommand, outputFile);
+      executionSlots.acquire();
+      try {
+        return executeDockerCommand(dockerCommand, outputFile);
+      } finally {
+        executionSlots.release();
+      }
 
     } catch (IOException exception) {
       return "Docker process error:\n" + exception.getMessage();
@@ -149,7 +186,7 @@ public class JavaRunnerService {
 
     List<String> dockerCommand = new ArrayList<>(
         List.of("docker", "run", "--name", containerName, "--rm", "--network", "none", "--cpus",
-            "2", "--memory", "512m", "--memory-swap", "512m", "--pids-limit", "32", "--cap-drop",
+            "2", "--memory", "256m", "--memory-swap", "256m", "--pids-limit", "32", "--cap-drop",
             "ALL"));
 
     if (noNewPrivileges) {
@@ -173,7 +210,10 @@ public class JavaRunnerService {
         .redirectOutput(outputFile.toFile())
         .start();
 
+    Thread outputWatcher = startOutputSizeWatcher(dockerProcess, outputFile);
+
     boolean finished = dockerProcess.waitFor(EXECUTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    outputWatcher.interrupt();
 
     if (!finished) {
       dockerProcess.destroyForcibly();
@@ -184,9 +224,33 @@ public class JavaRunnerService {
     return formatOutput(outputFile, dockerProcess.exitValue());
   }
 
+  private Thread startOutputSizeWatcher(final Process process, final Path outputFile) {
+    Thread watcher = new Thread(() -> {
+      try {
+        while (process.isAlive()) {
+          if (Files.exists(outputFile) && Files.size(outputFile) > MAX_OUTPUT_BYTES) {
+            process.destroyForcibly();
+            return;
+          }
+          Thread.sleep(OUTPUT_WATCH_INTERVAL_MILLIS);
+        }
+      } catch (IOException exception) {
+        System.err.println("Could not check output size: " + exception.getMessage());
+      } catch (InterruptedException exception) {
+        Thread
+            .currentThread()
+            .interrupt();
+      }
+    });
+    watcher.setDaemon(true);
+    watcher.start();
+    return watcher;
+  }
+
   private String formatOutput(final Path outputFile, final int exitCode) throws IOException {
-    String output =
-        Files.exists(outputFile) ? Files.readString(outputFile, StandardCharsets.UTF_8) : "";
+    boolean truncated = Files.exists(outputFile) && Files.size(outputFile) > MAX_OUTPUT_BYTES;
+
+    String output = readOutput(outputFile);
 
     output = output.replaceAll("(?m)^.*[\\\\/]Main\\.java", "Main.java");
 
@@ -194,7 +258,22 @@ public class JavaRunnerService {
       output = "(Program finished without output)\n";
     }
 
+    if (truncated) {
+      output += "\n(output truncated - exceeded " + (MAX_OUTPUT_BYTES / 1024) + "KB limit)";
+    }
+
     return output + "\nProcess finished with exit code " + exitCode;
+  }
+
+  private String readOutput(final Path outputFile) throws IOException {
+    if (!Files.exists(outputFile)) {
+      return "";
+    }
+
+    try (var inputStream = Files.newInputStream(outputFile)) {
+      byte[] bytes = inputStream.readNBytes((int) MAX_OUTPUT_BYTES);
+      return new String(bytes, StandardCharsets.UTF_8);
+    }
   }
 
   private void removeContainer(String containerName) {
