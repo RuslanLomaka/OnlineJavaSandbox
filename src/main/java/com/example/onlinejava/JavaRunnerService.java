@@ -22,9 +22,13 @@ import org.springframework.stereotype.Service;
 public class JavaRunnerService {
 
   /**
-   * The Docker image used for running Java code in a sandboxed environment.
+   * The Docker image used for running Java code in a sandboxed
+   * environment, pinned by digest rather than the {@code 21-jdk} tag so
+   * a tag update upstream can't silently change what runs in
+   * production without this being updated deliberately.
    */
-  private static final String DOCKER_IMAGE = "eclipse-temurin:21-jdk";
+  private static final String DOCKER_IMAGE =
+      "eclipse-temurin@sha256:efd34b940f2d5a621605c8531c2afb7759c936b6c2ef637a69aa3bf3e1e789d1";
 
   /**
    * The maximum number of seconds to wait for Docker container
@@ -117,6 +121,7 @@ public class JavaRunnerService {
    * <ul>
    *   <li>No network access</li>
    *   <li>Limited CPU, memory, and process count</li>
+   *   <li>Limited open file descriptors and per-file size (ulimits)</li>
    *   <li>Captured output capped at {@value #MAX_OUTPUT_BYTES} bytes</li>
    *   <li>All capabilities dropped</li>
    *   <li>Read-only filesystem with limited writable tmpfs</li>
@@ -187,7 +192,7 @@ public class JavaRunnerService {
     List<String> dockerCommand = new ArrayList<>(
         List.of("docker", "run", "--name", containerName, "--rm", "--network", "none", "--cpus",
             "2", "--memory", "256m", "--memory-swap", "256m", "--pids-limit", "32", "--cap-drop",
-            "ALL"));
+            "ALL", "--ulimit", "nofile=1024:1024", "--ulimit", "fsize=67108864:67108864"));
 
     if (noNewPrivileges) {
       dockerCommand.add("--security-opt");
