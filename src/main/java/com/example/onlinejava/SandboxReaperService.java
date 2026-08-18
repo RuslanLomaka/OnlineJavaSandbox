@@ -87,7 +87,8 @@ public class SandboxReaperService {
 
     try {
       Process process = new ProcessBuilder(
-          "docker", "ps", "--filter", "name=" + SANDBOX_NAME_PREFIX, "--format", "{{.ID}}")
+          DockerExecutable.path(), "ps", "--filter", "name=" + SANDBOX_NAME_PREFIX, "--format",
+          "{{.ID}}")
           .redirectErrorStream(true)
           .start();
 
@@ -113,7 +114,7 @@ public class SandboxReaperService {
   private Instant containerStartTime(final String containerId) {
     try {
       Process process = new ProcessBuilder(
-          "docker", "inspect", "-f", "{{.State.StartedAt}}", containerId)
+          DockerExecutable.path(), "inspect", "-f", "{{.State.StartedAt}}", containerId)
           .redirectErrorStream(true)
           .start();
 
@@ -139,7 +140,7 @@ public class SandboxReaperService {
 
   private void removeContainer(final String containerId) {
     try {
-      Process process = new ProcessBuilder("docker", "rm", "-f", containerId)
+      Process process = new ProcessBuilder(DockerExecutable.path(), "rm", "-f", containerId)
           .redirectErrorStream(true)
           .start();
 

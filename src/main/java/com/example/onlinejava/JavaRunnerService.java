@@ -190,7 +190,8 @@ public class JavaRunnerService {
         .toString();
 
     List<String> dockerCommand = new ArrayList<>(
-        List.of("docker", "run", "--name", containerName, "--rm", "--network", "none", "--cpus",
+        List.of(DockerExecutable.path(), "run", "--name", containerName, "--rm", "--network",
+            "none", "--cpus",
             "2", "--memory", "256m", "--memory-swap", "256m", "--pids-limit", "32", "--cap-drop",
             "ALL", "--ulimit", "nofile=1024:1024", "--ulimit", "fsize=67108864:67108864"));
 
@@ -287,7 +288,7 @@ public class JavaRunnerService {
     }
 
     try {
-      Process cleanup = new ProcessBuilder("docker", "rm", "-f", containerName)
+      Process cleanup = new ProcessBuilder(DockerExecutable.path(), "rm", "-f", containerName)
           .redirectErrorStream(true)
           .start();
 
