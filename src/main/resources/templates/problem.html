@@ -1,22 +1,9 @@
 <!DOCTYPE html>
-<html lang="en"
-      xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 
 <head>
     <meta charset="UTF-8">
-
-    <title>Bubble Sort | Online Java</title>
-
-    <link rel="stylesheet"
-          th:href="@{/css/site.css}">
-
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
-
-<link rel="stylesheet" th:href="@{/css/bubble-sort.css}">
+    <title th:text="${problem.title}">Problem</title>
 </head>
 
 <body>
@@ -29,22 +16,17 @@
 
         <section class="problem-description">
 
-<!--            <span class="difficulty">-->
-<!--                Easy · Arrays · Sorting-->
-<!--            </span>-->
-
             <!-- Displays the problem difficulty from the Problem object. -->
             <span th:text="${problem.difficulty}"></span>
 
+            <!-- Displays the problem category from the Problem object. -->
+            <span th:text="${problem.category}"></span>
 
-<!--            <h1>Bubble Sort</h1>-->
+            <!-- Displays the problem type from the Problem object. -->
+            <span th:text="${problem.type}"></span>
 
             <!-- Displays the problem title from the Problem object. -->
             <h1 th:text="${problem.title}"></h1>
-
-<!--            <p>-->
-<!--                Implement Bubble Sort for an array of integers.-->
-<!--            </p>-->
 
             <!-- Displays the problem description from the Problem object. -->
             <p th:text="${problem.description}"></p>
@@ -57,34 +39,24 @@
             <h2>Requirements</h2>
 
             <ul>
-                <li>Modify the supplied array.</li>
-                <li>Sort values from smallest to largest.</li>
-                <li>Handle negative numbers and duplicates.</li>
-                <li>Do not use Arrays.sort().</li>
-                <li>Do not return a new array.</li>
+                <li th:each="requirement : ${problem.requirements}"
+                    th:text="${requirement}">
+                </li>
             </ul>
 
-            <h2>Example 1</h2>
+            <h2>Examples</h2>
 
-            <div class="example">Input:
-                [5, 3, 8, 1]
+            <div th:each="example : ${problem.examples}"
+                 th:text="${example}"
+                 class="example">
+            </div>
+            <button id="hintButton" type="button">
+                Show Hint
+            </button>
 
-                After sorting:
-                [1, 3, 5, 8]</div>
-
-            <h2>Example 2</h2>
-
-            <div class="example">Input:
-                [4, 4, 2]
-
-                After sorting:
-                [2, 4, 4]</div>
-
-            <h2>Hint</h2>
-
-            <p>
-                Compare neighbouring values. When the left value
-                is larger than the right value, exchange them.
+            <p id="hintText"
+               th:text="${problem.hint}"
+               style="display: none;">
             </p>
 
         </section>
@@ -93,11 +65,17 @@
 
             <h2>Write your solution here</h2>
 
-            <p class="method-signature">public static void bubbleSort(int[] numbers) {</p>
+            <!-- Displays the method signature required for the problem. -->
+            <p class="method-signature"
+               th:text="${problem.methodSignature}">
+            </p>
 
             <div class="editor-wrapper">
-                <textarea id="solutionCode">    // Write your solution here
-</textarea>
+
+                <!-- Displays the starter code provided by the problem. -->
+                <textarea id="solutionCode"
+                          th:text="${problem.starterCode}"></textarea>
+
             </div>
 
             <p class="method-signature">}</p>
@@ -126,6 +104,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
 
 <script th:src="@{/js/bubble-sort.js}"></script>
+<script th:src="@{/js/problem.js}"></script>
 
 </body>
+
 </html>

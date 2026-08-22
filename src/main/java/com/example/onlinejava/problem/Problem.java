@@ -1,5 +1,7 @@
 package com.example.onlinejava.problem;
 
+import java.util.List;
+
 public class Problem {
 
     private final String slug;
@@ -8,7 +10,11 @@ public class Problem {
     private final ProblemType type;   // select type only from the present enum
     private final Difficulty difficulty;  // same for difficulty
     private final String description;
+    private final String methodSignature;
     private final String starterCode;
+    private final List<String> requirements;
+    private final List<String> examples;
+    private final String hint;
 
     public Problem(
             String slug,
@@ -17,7 +23,12 @@ public class Problem {
             ProblemType type,
             Difficulty difficulty,
             String description,
-            String starterCode
+            String methodSignature,
+            String starterCode,
+            List<String> requirements,
+            List<String> examples,
+            String hint
+
     ) {
         this.slug = slug;
         this.title = title;
@@ -25,7 +36,11 @@ public class Problem {
         this.type = type;
         this.difficulty = difficulty;
         this.description = description;
+        this.requirements = requirements;
+        this.methodSignature = methodSignature;
         this.starterCode = starterCode;
+        this.examples=examples;
+        this.hint=hint;
     }
 
     public String getSlug() {
@@ -48,11 +63,32 @@ public class Problem {
         return difficulty;
     }
 
+
     public String getDescription() {
         return description;
     }
 
     public String getStarterCode() {
         return starterCode;
+    }
+
+    // Returns the list of requirements for the problem.
+    public List<String> getRequirements() {
+        return requirements;
+    }
+
+    // Returns the method signature required for the problem.
+    public String getMethodSignature() {
+        return methodSignature;
+    }
+
+    // Returns the examples shown for the problem.
+    public List<String> getExamples() {
+        return examples;
+    }
+
+    // Returns the hint provided for the problem.
+    public String getHint() {
+        return hint;
     }
 }
