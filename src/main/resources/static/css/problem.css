@@ -1,0 +1,360 @@
+/* ============================================================
+   PROBLEM PAGE
+   ============================================================ */
+
+/* Removes unwanted width restrictions from the generic container. */
+.container {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+
+/* ============================================================
+   MAIN TWO-PANEL LAYOUT
+   ============================================================ */
+
+/* Splits the screen between the problem and code editor. */
+.problem-layout {
+    display: grid;
+    grid-template-columns: 42% 58%;
+    gap: 0;
+    width: 100%;
+    min-height: calc(100vh - 70px);
+    margin: 0;
+    padding: 0;
+}
+
+
+/* ============================================================
+   LEFT: PROBLEM DESCRIPTION
+   ============================================================ */
+
+/* Full-height problem description panel. */
+.problem-description {
+    background: #1f1f1f;
+    border-right: 1px solid #333;
+    border-radius: 0;
+    padding: 32px;
+    color: #f5f5f5;
+    overflow-y: auto;
+    min-height: calc(100vh - 70px);
+    box-sizing: border-box;
+}
+
+/* Problem metadata container. */
+.problem-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+/* Individual metadata badge. */
+.problem-meta span {
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: #2c2c2c;
+    color: #bdbdbd;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Problem title. */
+.problem-description h1 {
+    margin: 8px 0 18px;
+    font-size: 32px;
+}
+
+/* Problem description paragraph. */
+.problem-description p {
+    line-height: 1.6;
+    color: #d0d0d0;
+}
+
+/* Section headings. */
+.problem-description h2 {
+    margin-top: 28px;
+    margin-bottom: 14px;
+    font-size: 20px;
+}
+
+/* Requirements list. */
+.problem-description ul {
+    padding-left: 22px;
+    color: #d0d0d0;
+}
+
+/* Individual requirement. */
+.problem-description li {
+    margin-bottom: 8px;
+}
+
+
+/* ============================================================
+   EXAMPLES
+   ============================================================ */
+
+/* Example card. */
+/* Groups all example cards together. */
+.examples-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Individual example card. */
+.example {
+    background: #292929;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 16px;
+    color: #e8e8e8;
+}
+
+/* Example number/title. */
+.example-title {
+    margin-bottom: 8px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* Example content. */
+.example-content {
+    line-height: 1.6;
+    color: #d0d0d0;
+    font-family: monospace;
+}
+
+
+/* ============================================================
+   HINT
+   ============================================================ */
+
+/* Hint button. */
+#hintButton {
+    margin-top: 8px;
+    padding: 9px 16px;
+    border: 1px solid #555;
+    border-radius: 6px;
+    background: #292929;
+    color: #f5f5f5;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+/* Hint button hover state. */
+#hintButton:hover {
+    background: #353535;
+}
+
+/* Hint text. */
+#hintText {
+    margin-top: 12px;
+    padding: 14px;
+    background: #262626;
+    border-left: 3px solid #5cb85c;
+    border-radius: 6px;
+}
+
+
+/* ============================================================
+   RIGHT: CODE EDITOR
+   ============================================================ */
+
+/* Main coding workspace. */
+.solution-area {
+    background: #151515;
+    color: #f5f5f5;
+    min-height: calc(100vh - 70px);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+}
+
+
+/* ============================================================
+   EDITOR TOOLBAR
+   ============================================================ */
+
+/* Top toolbar containing the Java version. */
+.editor-toolbar {
+    height: 64px;
+    min-height: 64px;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    background: #202020;
+    border-bottom: 1px solid #333;
+    box-sizing: border-box;
+}
+
+/* Java language selector. */
+.language-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid #555;
+    border-radius: 7px;
+    background: #252525;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* Java version text. */
+.language-version {
+    color: #aaa;
+    font-weight: 400;
+}
+
+
+/* ============================================================
+   METHOD HEADER
+   ============================================================ */
+
+/* Displays the method signature required for the problem. */
+.method-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: #111;
+    border-bottom: 1px solid #2d2d2d;
+    color: #d8d8d8;
+    font-family: monospace;
+    font-size: 14px;
+    overflow-x: auto;
+    box-sizing: border-box;
+}
+
+/* Displays the opening brace of the user method. */
+.method-opening-brace {
+    color: #d8d8d8;
+}
+
+
+/* ============================================================
+   CODE EDITOR
+   ============================================================ */
+
+/* Makes the editor use all available vertical space. */
+.editor-wrapper {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Main CodeMirror editor. */
+.CodeMirror {
+    height: 100%;
+    min-height: 520px;
+    border: none;
+    border-radius: 0;
+    font-size: 15px;
+}
+
+
+/* ============================================================
+   EXECUTION BAR
+   ============================================================ */
+
+/* Bottom execution bar. */
+.execution-bar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 12px 18px;
+    background: #202020;
+    border-top: 1px solid #333;
+    box-sizing: border-box;
+}
+
+/* Run tests button. */
+.run-tests-button {
+    padding: 11px 22px;
+    border: none;
+    border-radius: 7px;
+    background: #2ea44f;
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Run tests hover state. */
+.run-tests-button:hover {
+    background: #24863d;
+}
+
+/* Run tests disabled state. */
+.run-tests-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* ============================================================
+   TEST RESULTS
+   ============================================================ */
+
+/* Test result section. */
+.test-panel {
+    background: #181818;
+    border-top: 1px solid #333;
+}
+
+/* Test results heading. */
+.test-panel-header {
+    padding: 12px 18px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #ddd;
+}
+
+/* Test output console. */
+#testConsole {
+    margin: 0;
+    min-height: 140px;
+    max-height: 220px;
+    padding: 14px 18px;
+    background: #0c0c0c;
+    border: none;
+    border-top: 1px solid #292929;
+    border-radius: 0;
+    color: #00ff66;
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow: auto;
+    white-space: pre-wrap;
+    box-sizing: border-box;
+}
+
+
+/* ============================================================
+   RESPONSIVE DESIGN
+   ============================================================ */
+
+/* Stacks the panels on smaller screens. */
+@media (max-width: 900px) {
+
+    .problem-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .problem-description {
+        min-height: auto;
+        border-right: none;
+        border-bottom: 1px solid #333;
+    }
+
+    .solution-area {
+        min-height: 700px;
+    }
+}
+

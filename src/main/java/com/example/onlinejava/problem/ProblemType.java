@@ -13,11 +13,17 @@ package com.example.onlinejava.problem;
 public enum ProblemType {
 
     ARRAY,
-    STRING,
-    HASH_TABLE,
+    SORTING,
+    SEARCHING,
+    HASHING,
     TWO_POINTERS,
     SLIDING_WINDOW,
+    RECURSION,
     STACK,
-    BINARY_SEARCH,
-    LINKED_LIST
+    QUEUE,
+    LINKED_LIST,
+    TREE_TRAVERSAL,
+    GRAPH_TRAVERSAL,
+    DYNAMIC_PROGRAMMING,
+    GREEDY
 }

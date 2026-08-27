@@ -5,14 +5,14 @@ import com.example.onlinejava.problem.ProblemDefinition;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.PathVariable;
-import com.example.onlinejava.problem.ProblemDefinition;
 import org.springframework.ui.Model;
 import com.example.onlinejava.problem.ProblemRegistry;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+
+import java.util.List;
 
 @Controller
 public class PageController {
@@ -48,7 +48,21 @@ public class PageController {
     }
 
     @GetMapping("/problems/arrays")
-    public String arrays() {
+    public String arrays(Model model) {
+
+        List<Problem> arrayProblems =
+                problemRegistry.getAllProblems()
+                        .stream()
+                        .map(ProblemDefinition::getProblem)
+                        .filter(problem ->
+                                "Arrays".equalsIgnoreCase(
+                                        problem.getCategory()
+                                )
+                        )
+                        .toList();
+
+        model.addAttribute("problems", arrayProblems);
+
         return "problems-arrays";
     }
 

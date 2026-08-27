@@ -2,6 +2,7 @@ package com.example.onlinejava.problem;
 
 import java.util.List;
 
+// Every problem will follow this class
 public class Problem {
 
     private final String slug;

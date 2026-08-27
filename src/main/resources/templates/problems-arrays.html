@@ -30,29 +30,84 @@
 
     <div class="problem-list">
 
-        <a class="problem-link"
-           th:href="@{/problems/arrays/bubble-sort}">
+        <!-- Displays array sorting problems. -->
+        <a th:each="problem : ${problems}"
+           th:if="${problem.type.name() == 'SORTING'}"
+           class="problem-link"
+           th:href="@{'/problems/arrays/' + ${problem.slug}}">
 
-            <span>Bubble Sort</span>
+            <span th:text="${problem.title}">
+                Problem
+            </span>
 
-            <span class="problem-difficulty">
+            <span class="problem-difficulty"
+                  th:text="${problem.difficulty}">
                 Easy
             </span>
 
         </a>
 
+        <div th:if="${#lists.isEmpty(problems.?[type.name() == 'SORTING'])}"
+             class="empty-section">
+            No sorting problems yet.
+        </div>
+
     </div>
 
     <h2>Searching</h2>
 
-    <div class="empty-section">
-        No searching problems yet.
+    <div class="problem-list">
+
+        <!-- Displays array searching problems. -->
+        <a th:each="problem : ${problems}"
+           th:if="${problem.type.name() == 'SEARCHING'}"
+           class="problem-link"
+           th:href="@{'/problems/arrays/' + ${problem.slug}}">
+
+            <span th:text="${problem.title}">
+                Problem
+            </span>
+
+            <span class="problem-difficulty"
+                  th:text="${problem.difficulty}">
+                Easy
+            </span>
+
+        </a>
+
+        <div th:if="${#lists.isEmpty(problems.?[type.name() == 'SEARCHING'])}"
+             class="empty-section">
+            No searching problems yet.
+        </div>
+
     </div>
 
-    <h2>Manipulation</h2>
+    <h2>Hashing</h2>
 
-    <div class="empty-section">
-        No array-manipulation problems yet.
+    <div class="problem-list">
+
+        <!-- Displays array hashing problems. -->
+        <a th:each="problem : ${problems}"
+           th:if="${problem.type.name() == 'HASHING'}"
+           class="problem-link"
+           th:href="@{'/problems/arrays/' + ${problem.slug}}">
+
+            <span th:text="${problem.title}">
+                Problem
+            </span>
+
+            <span class="problem-difficulty"
+                  th:text="${problem.difficulty}">
+                Easy
+            </span>
+
+        </a>
+
+        <div th:if="${#lists.isEmpty(problems.?[type.name() == 'HASHING'])}"
+             class="empty-section">
+            No hashing problems yet.
+        </div>
+
     </div>
 
 </main>
