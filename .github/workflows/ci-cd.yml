@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 concurrency:
   group: online-java-production
@@ -37,6 +38,7 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
+    
 
     steps:
       - name: Checkout repository
@@ -51,6 +53,21 @@ jobs:
 
       - name: Make Maven wrapper executable
         run: chmod +x mvnw
+
+      - name: Checkstyle
+        id: checkstyle
+        continue-on-error: true
+        run: ./mvnw -B -ntp checkstyle:check
+
+      - name: Report Checkstyle violations
+        if: always()
+        uses: jwgmeligmeyling/checkstyle-github-action@master
+        with:
+          path: '**/checkstyle-report.xml'
+
+      - name: Fail if Checkstyle failed
+        if: steps.checkstyle.outcome == 'failure'
+        run: exit 1
 
       - name: Run tests
         env:

@@ -31,21 +31,21 @@ public class PageController {
     ) {
         String username;
 
-        if (user == null) {
-            username = "Local developer";
-        } else {
-            username = user.getAttribute("login");
-        }
-
-        model.addAttribute("username", username);
-
-        return "sandbox";
+    if (user == null) {
+      username = "Local developer";
+    } else {
+      username = user.getAttribute("login");
     }
 
-    @GetMapping("/problems")
-    public String problems() {
-        return "problems";
-    }
+    model.addAttribute("username", username);
+
+    return "sandbox";
+  }
+
+  @GetMapping("/problems")
+  public String problems() {
+    return "problems";
+  }
 
     @GetMapping("/problems/arrays")
     public String arrays(Model model) {
@@ -66,15 +66,15 @@ public class PageController {
         return "problems-arrays";
     }
 
-    @GetMapping("/problems/collections")
-    public String collections() {
-        return "problems-collections";
-    }
+  @GetMapping("/problems/collections")
+  public String collections() {
+    return "problems-collections";
+  }
 
-    @GetMapping("/problems/algorithms")
-    public String algorithms() {
-        return "problems-algorithms";
-    }
+  @GetMapping("/problems/algorithms")
+  public String algorithms() {
+    return "problems-algorithms";
+  }
 
 //    @GetMapping("/problems/arrays/bubble-sort")
 //    public String bubbleSort() {
@@ -106,11 +106,11 @@ public class PageController {
         return "problem";
     }
 
-    @GetMapping(
-            "/problems/collections/longest-unique-substring"
-    )
-    public String longestUniqueSubstring() {
-        return "collections/longest-unique-substring";
-    }
+  @GetMapping(
+      "/problems/collections/longest-unique-substring"
+  )
+  public String longestUniqueSubstring() {
+    return "collections/longest-unique-substring";
+  }
 
 }

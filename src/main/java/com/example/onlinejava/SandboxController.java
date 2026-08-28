@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * REST controller that submits user-provided source code to
+ * {@link JavaRunnerService} for sandboxed execution.
+ */
 @RestController
 public class SandboxController {
 

@@ -264,7 +264,10 @@ const javaWords = [
 
     async function runCode() {
         runButton.disabled = true;
-        consoleOutput.textContent = "Compiling...\n";
+        consoleOutput.textContent =
+            "Compiling...\n" +
+            "(If the sandbox is busy running other submissions, " +
+            "this may take a few extra seconds — please wait.)\n";
 
         try {
             const response = await fetch("/sandbox/run", {
