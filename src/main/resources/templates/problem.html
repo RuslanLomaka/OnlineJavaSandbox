@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Loads the common site styling. -->
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+
+    <!-- Loads the CodeMirror base styling. -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+
+    <!-- Loads the CodeMirror dark theme. -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+
+    <!-- Loads the generic problem-page styling. -->
+    <link rel="stylesheet"
+          th:href="@{/css/problem.css}">
+
+    <title th:text="${problem.title}">Problem</title>
+</head>
+
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<!-- Stores the current problem slug for the problem-page JavaScript. -->
+<main class="container"
+      th:attr="data-problem-slug=${problem.slug}">
+
+    <div class="problem-layout">
+
+        <!-- ==================== LEFT: PROBLEM ==================== -->
+        <section class="problem-description">
+
+            <!-- Displays problem metadata. -->
+            <div class="problem-meta">
+                <span th:text="${problem.difficulty}"></span>
+                <span th:text="${problem.category}"></span>
+                <span th:text="${problem.type}"></span>
+            </div>
+
+            <!-- Displays the problem title. -->
+            <h1 th:text="${problem.title}"></h1>
+
+            <!-- Displays the problem description. -->
+            <p th:text="${problem.description}"></p>
+
+            <h2>Requirements</h2>
+
+            <!-- Displays all problem requirements. -->
+            <ul>
+                <li th:each="requirement : ${problem.requirements}"
+                    th:text="${requirement}">
+                </li>
+            </ul>
+
+            <h2>Examples</h2>
+
+            <!-- Displays each problem example as a separate card. -->
+            <div class="examples-container">
+
+                <div th:each="example, stat : ${problem.examples}"
+                     class="example">
+
+                    <div class="example-title"
+                         th:text="'Example ' + ${stat.count}">
+                    </div>
+
+                    <div class="example-content"
+                         th:text="${example}">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Shows the hint only when clicked. -->
+            <button id="hintButton"
+                    type="button">
+                Show Hint
+            </button>
+
+            <!-- Displays the problem hint. -->
+            <p id="hintText"
+               th:text="${problem.hint}"
+               style="display: none;">
+            </p>
+
+        </section>
+
+
+        <!-- ==================== RIGHT: CODE EDITOR ==================== -->
+        <section class="solution-area">
+
+            <!-- Displays the Java version used by the editor. -->
+            <div class="editor-toolbar">
+
+                <div class="language-selector">
+                    <span>Java</span>
+                    <span class="language-version">(21)</span>
+                </div>
+
+            </div>
+
+            <!-- Displays the method signature required for the problem. -->
+            <div class="method-header">
+                <span th:text="${problem.methodSignature}"></span>
+                <span class="method-opening-brace">{</span>
+            </div>
+
+            <!-- Code editor container. -->
+            <div class="editor-wrapper">
+
+                <!-- Displays the starter code provided by the problem. -->
+                <textarea id="solutionCode"
+                          th:text="${problem.starterCode}">
+                </textarea>
+
+            </div>
+
+            <!-- Execution controls. -->
+            <div class="execution-bar">
+
+                <button id="runTestsButton"
+                        type="button"
+                        class="run-tests-button">
+                    Run Tests
+                </button>
+
+            </div>
+
+            <!-- Test result panel. -->
+            <div class="test-panel">
+
+                <div class="test-panel-header">
+                    <span>Test Results</span>
+                </div>
+
+                <pre id="testConsole">Waiting for your solution...</pre>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</main>
+
+
+<!-- ==================== CODEMIRROR ==================== -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+
+<!-- Generic problem-page JavaScript. -->
+<script th:src="@{/js/problem.js}"></script>
+
+</body>
+</html>
