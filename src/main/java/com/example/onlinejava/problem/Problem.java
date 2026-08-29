@@ -1,95 +1,206 @@
+
 package com.example.onlinejava.problem;
 
 import java.util.List;
 
-// Every problem will follow this class
+/**
+ * Represents a coding problem and its associated metadata.
+ */
 public class Problem {
 
-    private final String slug;
-    private final String title;
-    private final String category;
-    private final ProblemType type;   // select type only from the present enum
-    private final Difficulty difficulty;  // same for difficulty
-    private final String description;
-    private final String methodSignature;
-    private final String starterCode;
-    private final List<String> requirements;
-    private final List<String> examples;
-    private final String hint;
+  /**
+   * Unique identifier used in problem URLs.
+   */
+  private final String slug;
 
-    public Problem(
-            String slug,
-            String title,
-            String category,
-            ProblemType type,
-            Difficulty difficulty,
-            String description,
-            String methodSignature,
-            String starterCode,
-            List<String> requirements,
-            List<String> examples,
-            String hint
+  /**
+   * Display title of the problem.
+   */
+  private final String title;
 
-    ) {
-        this.slug = slug;
-        this.title = title;
-        this.category = category;
-        this.type = type;
-        this.difficulty = difficulty;
-        this.description = description;
-        this.requirements = requirements;
-        this.methodSignature = methodSignature;
-        this.starterCode = starterCode;
-        this.examples=examples;
-        this.hint=hint;
-    }
+  /**
+   * Main category of the problem.
+   */
+  private final String category;
 
-    public String getSlug() {
-        return slug;
-    }
+  /**
+   * Problem-solving technique associated with the problem.
+   */
+  private final ProblemType type;
 
-    public String getTitle() {
-        return title;
-    }
+  /**
+   * Difficulty level of the problem.
+   */
+  private final Difficulty difficulty;
 
-    public String getCategory() {
-        return category;
-    }
+  /**
+   * Description of the problem.
+   */
+  private final String description;
 
-    public ProblemType getType() {
-        return type;
-    }
+  /**
+   * Required method signature for the solution.
+   */
+  private final String methodSignature;
 
-    public Difficulty getDifficulty() {
-        return difficulty;
-    }
+  /**
+   * Starter code displayed in the editor.
+   */
+  private final String starterCode;
 
+  /**
+   * Requirements that the submitted solution must satisfy.
+   */
+  private final List<String> requirements;
 
-    public String getDescription() {
-        return description;
-    }
+  /**
+   * Examples displayed on the problem page.
+   */
+  private final List<String> examples;
 
-    public String getStarterCode() {
-        return starterCode;
-    }
+  /**
+   * Hint provided to the user.
+   */
+  private final String hint;
 
-    // Returns the list of requirements for the problem.
-    public List<String> getRequirements() {
-        return requirements;
-    }
+  /**
+   * Creates a problem definition.
+   *
+   * @param problemSlug unique problem identifier
+   * @param problemTitle display title
+   * @param problemCategory problem category
+   * @param problemType problem-solving technique
+   * @param problemDifficulty difficulty level
+   * @param problemDescription problem description
+   * @param problemMethodSignature required method signature
+   * @param problemStarterCode starter code for the editor
+   * @param problemRequirements solution requirements
+   * @param problemExamples examples shown to the user
+   * @param problemHint hint provided to the user
+   */
 
-    // Returns the method signature required for the problem.
-    public String getMethodSignature() {
-        return methodSignature;
-    }
+  public Problem(
+      final String problemSlug,
+      final String problemTitle,
+      final String problemCategory,
+      final ProblemType problemType,
+      final Difficulty problemDifficulty,
+      final String problemDescription,
+      final String problemMethodSignature,
+      final String problemStarterCode,
+      final List<String> problemRequirements,
+      final List<String> problemExamples,
+      final String problemHint
+  ) {
+    this.slug = problemSlug;
+    this.title = problemTitle;
+    this.category = problemCategory;
+    this.type = problemType;
+    this.difficulty = problemDifficulty;
+    this.description = problemDescription;
+    this.methodSignature = problemMethodSignature;
+    this.starterCode = problemStarterCode;
+    this.requirements = problemRequirements;
+    this.examples = problemExamples;
+    this.hint = problemHint;
+  }
 
-    // Returns the examples shown for the problem.
-    public List<String> getExamples() {
-        return examples;
-    }
+  /**
+   * Returns the problem slug.
+   *
+   * @return problem slug
+   */
+  public String getSlug() {
+    return slug;
+  }
 
-    // Returns the hint provided for the problem.
-    public String getHint() {
-        return hint;
-    }
+  /**
+   * Returns the problem title.
+   *
+   * @return problem title
+   */
+  public String getTitle() {
+    return title;
+  }
+
+  /**
+   * Returns the problem category.
+   *
+   * @return problem category
+   */
+  public String getCategory() {
+    return category;
+  }
+
+  /**
+   * Returns the problem type.
+   *
+   * @return problem type
+   */
+  public ProblemType getType() {
+    return type;
+  }
+
+  /**
+   * Returns the difficulty level.
+   *
+   * @return difficulty level
+   */
+  public Difficulty getDifficulty() {
+    return difficulty;
+  }
+
+  /**
+   * Returns the problem description.
+   *
+   * @return problem description
+   */
+  public String getDescription() {
+    return description;
+  }
+
+  /**
+   * Returns the required method signature.
+   *
+   * @return method signature
+   */
+  public String getMethodSignature() {
+    return methodSignature;
+  }
+
+  /**
+   * Returns the starter code.
+   *
+   * @return starter code
+   */
+  public String getStarterCode() {
+    return starterCode;
+  }
+
+  /**
+   * Returns the requirements for the problem.
+   *
+   * @return problem requirements
+   */
+  public List<String> getRequirements() {
+    return requirements;
+  }
+
+  /**
+   * Returns the examples for the problem.
+   *
+   * @return problem examples
+   */
+  public List<String> getExamples() {
+    return examples;
+  }
+
+  /**
+   * Returns the hint for the problem.
+   *
+   * @return problem hint
+   */
+  public String getHint() {
+    return hint;
+  }
 }

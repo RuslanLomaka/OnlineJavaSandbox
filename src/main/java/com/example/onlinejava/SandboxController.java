@@ -10,52 +10,80 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Handles requests for executing Java source code.
+ */
 @RestController
-public class SandboxController {
+public final class SandboxController {
 
-    private final JavaRunnerService javaRunnerService;
-    private final ProblemRegistry problemRegistry;
+  /**
+   * Service responsible for running Java code.
+   */
+  private final JavaRunnerService javaRunnerService;
 
-    public SandboxController(
-            JavaRunnerService javaRunnerService,
-            ProblemRegistry problemRegistry
-    ) {
-        this.javaRunnerService = javaRunnerService;
-        this.problemRegistry = problemRegistry;
+  /**
+   * Registry containing all available coding problems.
+   */
+  private final ProblemRegistry problemRegistry;
+
+  /**
+   * Creates a sandbox controller.
+   *
+   * @param runnerService service responsible for executing Java code
+   * @param registry registry containing available problems
+   */
+  public SandboxController(
+      final JavaRunnerService runnerService,
+      final ProblemRegistry registry
+  ) {
+    this.javaRunnerService = runnerService;
+    this.problemRegistry = registry;
+  }
+
+  /**
+   * Executes Java source code directly.
+   *
+   * @param sourceCode complete Java source code
+   * @return execution output
+   */
+  @PostMapping(
+      value = "/sandbox/run",
+      consumes = MediaType.TEXT_PLAIN_VALUE,
+      produces = MediaType.TEXT_PLAIN_VALUE
+  )
+  public String run(final @RequestBody String sourceCode) {
+    return javaRunnerService.run(sourceCode);
+  }
+
+  /**
+   * Builds and executes the test source for a registered problem.
+   *
+   * @param slug problem slug
+   * @param solutionCode solution code submitted by the user
+   * @return test execution output
+   */
+  @PostMapping(
+      value = "/problems/{slug}/run",
+      consumes = MediaType.TEXT_PLAIN_VALUE,
+      produces = MediaType.TEXT_PLAIN_VALUE
+  )
+  public String runProblem(
+      final @PathVariable String slug,
+      final @RequestBody String solutionCode
+  ) {
+    final ProblemDefinition problemDefinition =
+        problemRegistry.getProblem(slug);
+
+    if (problemDefinition == null) {
+      throw new ResponseStatusException(
+          HttpStatus.NOT_FOUND,
+          "Problem not found"
+      );
     }
 
-    @PostMapping(
-            value = "/sandbox/run",
-            consumes = MediaType.TEXT_PLAIN_VALUE,
-            produces = MediaType.TEXT_PLAIN_VALUE
-    )
-    public String run(@RequestBody String sourceCode) {
-        return javaRunnerService.run(sourceCode);
-    }
+    final String completeSource =
+        problemDefinition.buildTestSource(solutionCode);
 
-    // Builds and executes the test source for a registered problem.
-    @PostMapping(
-            value = "/problems/{slug}/run",
-            consumes = MediaType.TEXT_PLAIN_VALUE,
-            produces = MediaType.TEXT_PLAIN_VALUE
-    )
-    public String runProblem(
-            @PathVariable String slug,
-            @RequestBody String solutionCode
-    ) {
-        ProblemDefinition problemDefinition =
-                problemRegistry.getProblem(slug);
-
-        if (problemDefinition == null) {
-            throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Problem not found"
-            );
-        }
-
-        String completeSource =
-                problemDefinition.buildTestSource(solutionCode);
-
-        return javaRunnerService.run(completeSource);
-    }
+    return javaRunnerService.run(completeSource);
+  }
 }
