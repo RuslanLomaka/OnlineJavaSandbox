@@ -1,8 +1,5 @@
 package com.example.onlinejava;
 
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Value;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -12,325 +9,333 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
+/**
+ * Compiles and executes user-submitted Java source code inside an
+ * isolated, resource-limited Docker container.
+ */
 @Service
 public class JavaRunnerService {
 
-    private static final String DOCKER_IMAGE =
-            "eclipse-temurin:21-jdk";
+  /**
+   * The Docker image used for running Java code in a sandboxed
+   * environment, pinned by digest rather than the {@code 21-jdk} tag so
+   * a tag update upstream can't silently change what runs in
+   * production without this being updated deliberately.
+   */
+  private static final String DOCKER_IMAGE =
+      "eclipse-temurin@sha256:efd34b940f2d5a621605c8531c2afb7759c936b6c2ef637a69aa3bf3e1e789d1";
 
-    private static final int EXECUTION_TIMEOUT_SECONDS = 100;
+  /**
+   * The maximum number of seconds to wait for Docker container
+   * execution to complete. If the execution exceeds this timeout,
+   * the container will be forcibly terminated.
+   */
+  private static final int EXECUTION_TIMEOUT_SECONDS = 100;
 
-    private final Path sandboxRoot;
-    private final boolean noNewPrivileges;
+  /**
+   * The maximum number of bytes of combined stdout/stderr output that
+   * will be captured from a single execution. Output beyond this
+   * limit causes the container to be killed early.
+   */
+  private static final long MAX_OUTPUT_BYTES = 1_048_576;
 
-    public JavaRunnerService(
-            @Value("${sandbox.root}") String sandboxRoot,
-            @Value("${sandbox.no-new-privileges:true}")
-            boolean noNewPrivileges
-    ) {
-        this.sandboxRoot = Path.of(sandboxRoot);
-        this.noNewPrivileges = noNewPrivileges;
+  /**
+   * How often, in milliseconds, the running container's output file
+   * size is polled to enforce {@value #MAX_OUTPUT_BYTES}.
+   */
+  private static final long OUTPUT_WATCH_INTERVAL_MILLIS = 200;
+
+  /**
+   * The maximum number of Docker sandbox executions allowed to run at
+   * the same time. Chosen to match how many {@code --cpus 2}
+   * containers the host can run without CPU contention. Requests
+   * beyond this limit wait their turn rather than being rejected.
+   */
+  private static final int MAX_CONCURRENT_EXECUTIONS = 2;
+
+  /**
+   * Bounds how many executions run concurrently. Acquired before a
+   * container starts and released once it finishes.
+   */
+  private final Semaphore executionSlots = new Semaphore(MAX_CONCURRENT_EXECUTIONS);
+
+  /**
+   * The root directory path where temporary sandbox execution
+   * environments are created for running user-submitted Java code.
+   */
+  private final Path sandboxRoot;
+
+  /**
+   * Whether to enable the no-new-privileges security option for
+   * Docker containers.
+   * When true, prevents processes inside the container from gaining
+   * additional privileges through mechanisms like setuid binaries.
+   */
+  private final boolean noNewPrivileges;
+
+  /**
+   * Constructs a new JavaRunnerService with the specified sandbox
+   * configuration.
+   *
+   * @param sandboxRootPath the root directory path where temporary
+   *     sandbox execution environments will be created
+   * @param noNewPrivilegesFlag whether to enable the no-new-privileges
+   *     security option for Docker containers
+   */
+  public JavaRunnerService(@Value("${sandbox.root}") final String sandboxRootPath,
+                           @Value("${sandbox.no-new-privileges:true}")
+                           final boolean noNewPrivilegesFlag) {
+    this.sandboxRoot = Path.of(sandboxRootPath);
+    this.noNewPrivileges = noNewPrivilegesFlag;
+  }
+
+  /**
+   * Executes user-submitted Java source code in a sandboxed Docker
+   * container and returns the compilation and execution output.
+   *
+   * <p>This method performs the following steps:
+   * <ol>
+   *   <li>Creates a temporary directory for the execution
+   *       environment</li>
+   *   <li>Writes the source code to a Main.java file</li>
+   *   <li>Sets appropriate file permissions for the source file</li>
+   *   <li>Waits for a free execution slot if
+   *       {@value #MAX_CONCURRENT_EXECUTIONS} executions are already
+   *       running</li>
+   *   <li>Starts a sandboxed Docker container with resource limits
+   *       and security constraints</li>
+   *   <li>Compiles and executes the Java code inside the
+   *       container</li>
+   *   <li>Waits for execution to complete or times out after
+   *       {@value #EXECUTION_TIMEOUT_SECONDS} seconds</li>
+   *   <li>Returns the combined compilation and execution output</li>
+   * </ol>
+   *
+   * <p>The Docker container is configured with the following
+   * security measures:
+   * <ul>
+   *   <li>No network access</li>
+   *   <li>Limited CPU, memory, and process count</li>
+   *   <li>Limited open file descriptors and per-file size (ulimits)</li>
+   *   <li>Captured output capped at {@value #MAX_OUTPUT_BYTES} bytes</li>
+   *   <li>All capabilities dropped</li>
+   *   <li>Read-only filesystem with limited writable tmpfs</li>
+   *   <li>Optional no-new-privileges security option</li>
+   * </ul>
+   *
+   * <p>The temporary directory and Docker container are cleaned up
+   * automatically after execution, regardless of success or failure.
+   *
+   * @param sourceCode the Java source code to compile and execute,
+   *     which should contain a public class named Main
+   * @return the output from compilation and execution, including any
+   *     error messages, or a timeout/error message if execution
+   *     fails
+   */
+  public String run(final String sourceCode) {
+    Path temporaryDirectory = null;
+    String containerName = null;
+
+    try {
+      Files.createDirectories(sandboxRoot);
+
+      temporaryDirectory = Files.createTempDirectory(sandboxRoot, "java-sandbox-");
+
+      Path sourceFile = writeSourceFile(temporaryDirectory, sourceCode);
+      makeSourceReadableByRunner(temporaryDirectory, sourceFile);
+
+      containerName = "java-sandbox-" + UUID.randomUUID();
+      Path outputFile = temporaryDirectory.resolve("docker-output.txt");
+
+      List<String> dockerCommand = buildDockerCommand(temporaryDirectory, containerName);
+
+      executionSlots.acquire();
+      try {
+        return executeDockerCommand(dockerCommand, outputFile);
+      } finally {
+        executionSlots.release();
+      }
+
+    } catch (IOException exception) {
+      return "Docker process error:\n" + exception.getMessage();
+
+    } catch (InterruptedException exception) {
+      Thread
+          .currentThread()
+          .interrupt();
+      return "Execution was interrupted.";
+
+    } finally {
+      removeContainer(containerName);
+      deleteDirectory(temporaryDirectory);
+    }
+  }
+
+  private Path writeSourceFile(final Path temporaryDirectory, final String sourceCode)
+      throws IOException {
+    Path sourceFile = temporaryDirectory.resolve("Main.java");
+    Files.writeString(sourceFile, sourceCode, StandardCharsets.UTF_8);
+    return sourceFile;
+  }
+
+  private List<String> buildDockerCommand(final Path temporaryDirectory,
+                                          final String containerName) {
+    String hostDirectory = temporaryDirectory
+        .toAbsolutePath()
+        .toString();
+
+    List<String> dockerCommand = new ArrayList<>(
+        List.of(DockerExecutable.path(), "run", "--name", containerName, "--rm", "--network",
+            "none", "--cpus",
+            "2", "--memory", "256m", "--memory-swap", "256m", "--pids-limit", "32", "--cap-drop",
+            "ALL", "--ulimit", "nofile=1024:1024", "--ulimit", "fsize=67108864:67108864"));
+
+    if (noNewPrivileges) {
+      dockerCommand.add("--security-opt");
+      dockerCommand.add("no-new-privileges");
     }
 
-    public String run(String sourceCode) {
-        Path temporaryDirectory = null;
-        String containerName = null;
+    dockerCommand.addAll(List.of("--read-only", "--mount",
+        "type=bind,source=" + hostDirectory + ",target=/source,readonly", "--tmpfs",
+        "/work:rw,nosuid,size=64m", "--entrypoint", "sh", DOCKER_IMAGE, "-c",
+        "cp /source/Main.java /work/Main.java" + " && cd /work" + " && javac Main.java"
+            + " && java Main"));
 
-        try {
-            /*
-             * This directory is mounted into the Spring container
-             * from the Raspberry Pi host using compose.yaml.
-             *
-             * Pi host:
-             * /tmp/online-java-runs
-             *
-             * Spring container:
-             * /tmp/online-java-runs
-             *
-             * The identical path is important because the Docker
-             * daemon runs on the Pi host and must be able to find
-             * the temporary directory used as a bind mount.
-             */
-            Files.createDirectories(sandboxRoot);
+    return dockerCommand;
+  }
 
-            /*
-             * Create a unique directory for this execution.
-             *
-             * Example:
-             * /tmp/online-java-runs/java-sandbox-123456/
-             */
-            temporaryDirectory =
-                    Files.createTempDirectory(
-                            sandboxRoot,
-                            "java-sandbox-"
-                    );
+  private String executeDockerCommand(final List<String> dockerCommand, final Path outputFile)
+      throws IOException, InterruptedException {
+    Process dockerProcess = new ProcessBuilder(dockerCommand)
+        .redirectErrorStream(true)
+        .redirectOutput(outputFile.toFile())
+        .start();
 
-            /*
-             * Create:
-             * /tmp/online-java-runs/java-sandbox-123456/Main.java
-             */
-            Path sourceFile =
-                    temporaryDirectory.resolve("Main.java");
+    Thread outputWatcher = startOutputSizeWatcher(dockerProcess, outputFile);
 
-            /*
-             * Write the source code received from the browser
-             * into a real Java source file.
-             */
-            Files.writeString(
-                    sourceFile,
-                    sourceCode,
-                    StandardCharsets.UTF_8
-            );
+    boolean finished = dockerProcess.waitFor(EXECUTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    outputWatcher.interrupt();
 
-            makeSourceReadableByRunner(
-                    temporaryDirectory,
-                    sourceFile
-            );
-
-            /*
-             * Docker output is redirected into this host file.
-             * This prevents stdout or stderr from filling the
-             * process pipe and blocking the Java application.
-             */
-            Path outputFile =
-                    temporaryDirectory.resolve("docker-output.txt");
-
-            /*
-             * Every execution gets a unique container name.
-             */
-            containerName =
-                    "java-sandbox-" + UUID.randomUUID();
-
-            /*
-             * This path exists both inside the Spring container
-             * and on the Raspberry Pi host.
-             */
-            String hostDirectory =
-                    temporaryDirectory
-                            .toAbsolutePath()
-                            .toString();
-
-            /*
-             * Start a new disposable Docker container.
-             */
-            List<String> dockerCommand = new ArrayList<>(List.of(
-                    "docker",
-                    "run",
-
-                    "--name",
-                    containerName,
-
-                    "--rm",
-
-                    "--network",
-                    "none",
-
-                    "--cpus",
-                    "2",
-
-                    "--pids-limit",
-                    "32",
-
-                    "--cap-drop",
-                    "ALL"
-            ));
-
-            if (noNewPrivileges) {
-                dockerCommand.add("--security-opt");
-                dockerCommand.add("no-new-privileges");
-            }
-
-            dockerCommand.addAll(List.of(
-
-                    "--read-only",
-
-                    "--mount",
-                    "type=bind,source="
-                            + hostDirectory
-                            + ",target=/source,readonly",
-
-                    "--tmpfs",
-                    "/work:rw,nosuid,size=64m",
-
-                    "--entrypoint",
-                    "sh",
-
-                    DOCKER_IMAGE,
-
-                    "-c",
-
-                    /*
-                     * Commands executed inside the runner:
-                     *
-                     * 1. Copy Main.java from the read-only mount.
-                     * 2. Enter the writable RAM-backed directory.
-                     * 3. Compile Main.java.
-                     * 4. Run Main.
-                     */
-                    "cp /source/Main.java /work/Main.java"
-                            + " && cd /work"
-                            + " && javac Main.java"
-                            + " && java Main"
-            ));
-
-            Process dockerProcess = new ProcessBuilder(dockerCommand)
-                    .redirectErrorStream(true)
-                    .redirectOutput(outputFile.toFile())
-                    .start();
-
-            /*
-             * Wait for compilation and execution.
-             */
-            boolean finished = dockerProcess.waitFor(
-                    EXECUTION_TIMEOUT_SECONDS,
-                    TimeUnit.SECONDS
-            );
-
-            if (!finished) {
-                /*
-                 * Kill the Docker CLI process.
-                 * The named container is also removed in finally.
-                 */
-                dockerProcess.destroyForcibly();
-                dockerProcess.waitFor(
-                        2,
-                        TimeUnit.SECONDS
-                );
-
-                return "Execution timed out.";
-            }
-
-            /*
-             * Read compiler and program output.
-             */
-            String output = Files.exists(outputFile)
-                    ? Files.readString(
-                    outputFile,
-                    StandardCharsets.UTF_8
-            )
-                    : "";
-
-            /*
-             * Simplify compiler paths.
-             *
-             * Example:
-             * /work/Main.java:5: error
-             *
-             * becomes:
-             * Main.java:5: error
-             */
-            output = output.replaceAll(
-                    "(?m)^.*[\\\\/]Main\\.java",
-                    "Main.java"
-            );
-
-            if (output.isBlank()) {
-                output =
-                        "(Program finished without output)\n";
-            }
-
-            return output
-                    + "\nProcess finished with exit code "
-                    + dockerProcess.exitValue();
-
-        } catch (IOException exception) {
-            return "Docker process error:\n"
-                    + exception.getMessage();
-
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            return "Execution was interrupted.";
-
-        } finally {
-            /*
-             * Remove a container left behind after timeout
-             * or another unexpected error.
-             */
-            removeContainer(containerName);
-
-            /*
-             * Delete Main.java and docker-output.txt.
-             */
-            deleteDirectory(temporaryDirectory);
-        }
+    if (!finished) {
+      dockerProcess.destroyForcibly();
+      dockerProcess.waitFor(2, TimeUnit.SECONDS);
+      return "Execution timed out.";
     }
 
-    private void removeContainer(String containerName) {
-        if (containerName == null) {
+    return formatOutput(outputFile, dockerProcess.exitValue());
+  }
+
+  private Thread startOutputSizeWatcher(final Process process, final Path outputFile) {
+    Thread watcher = new Thread(() -> {
+      try {
+        while (process.isAlive()) {
+          if (Files.exists(outputFile) && Files.size(outputFile) > MAX_OUTPUT_BYTES) {
+            process.destroyForcibly();
             return;
+          }
+          Thread.sleep(OUTPUT_WATCH_INTERVAL_MILLIS);
         }
+      } catch (IOException exception) {
+        System.err.println("Could not check output size: " + exception.getMessage());
+      } catch (InterruptedException exception) {
+        Thread
+            .currentThread()
+            .interrupt();
+      }
+    });
+    watcher.setDaemon(true);
+    watcher.start();
+    return watcher;
+  }
 
-        try {
-            Process cleanup = new ProcessBuilder(
-                    "docker",
-                    "rm",
-                    "-f",
-                    containerName
-            )
-                    .redirectErrorStream(true)
-                    .start();
+  private String formatOutput(final Path outputFile, final int exitCode) throws IOException {
+    boolean truncated = Files.exists(outputFile) && Files.size(outputFile) > MAX_OUTPUT_BYTES;
 
-            cleanup.waitFor(
-                    3,
-                    TimeUnit.SECONDS
-            );
+    String output = readOutput(outputFile);
 
-        } catch (IOException exception) {
-            System.err.println(
-                    "Could not remove Docker container: "
-                            + exception.getMessage()
-            );
+    output = output.replaceAll("(?m)^.*[\\\\/]Main\\.java", "Main.java");
 
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-        }
+    if (output.isBlank()) {
+      output = "(Program finished without output)\n";
     }
 
-    private void makeSourceReadableByRunner(
-            Path temporaryDirectory,
-            Path sourceFile
-    ) throws IOException {
-        if (!Files.getFileStore(sourceFile)
-                .supportsFileAttributeView("posix")) {
-            return;
-        }
-
-        Files.setPosixFilePermissions(
-                temporaryDirectory,
-                PosixFilePermissions.fromString("rwxr-xr-x")
-        );
-
-        Files.setPosixFilePermissions(
-                sourceFile,
-                PosixFilePermissions.fromString("rw-r--r--")
-        );
+    if (truncated) {
+      output += "\n(output truncated - exceeded " + (MAX_OUTPUT_BYTES / 1024) + "KB limit)";
     }
 
-    private void deleteDirectory(Path directory) {
-        if (directory == null || !Files.exists(directory)) {
-            return;
-        }
+    return output + "\nProcess finished with exit code " + exitCode;
+  }
 
-        try (var paths = Files.walk(directory)) {
-            paths.sorted(Comparator.reverseOrder())
-                    .forEach(path -> {
-                        try {
-                            Files.deleteIfExists(path);
-
-                        } catch (IOException exception) {
-                            System.err.println(
-                                    "Could not delete " + path
-                            );
-                        }
-                    });
-
-        } catch (IOException exception) {
-            System.err.println(
-                    "Cleanup failed: "
-                            + exception.getMessage()
-            );
-        }
+  private String readOutput(final Path outputFile) throws IOException {
+    if (!Files.exists(outputFile)) {
+      return "";
     }
+
+    try (var inputStream = Files.newInputStream(outputFile)) {
+      byte[] bytes = inputStream.readNBytes((int) MAX_OUTPUT_BYTES);
+      return new String(bytes, StandardCharsets.UTF_8);
+    }
+  }
+
+  private void removeContainer(String containerName) {
+    if (containerName == null) {
+      return;
+    }
+
+    try {
+      Process cleanup = new ProcessBuilder(DockerExecutable.path(), "rm", "-f", containerName)
+          .redirectErrorStream(true)
+          .start();
+
+      cleanup.waitFor(3, TimeUnit.SECONDS);
+
+    } catch (IOException exception) {
+      System.err.println("Could not remove Docker container: " + exception.getMessage());
+
+    } catch (InterruptedException exception) {
+      Thread
+          .currentThread()
+          .interrupt();
+    }
+  }
+
+  private void makeSourceReadableByRunner(Path temporaryDirectory, Path sourceFile)
+      throws IOException {
+    if (!Files
+        .getFileStore(sourceFile)
+        .supportsFileAttributeView("posix")) {
+      return;
+    }
+
+    Files.setPosixFilePermissions(temporaryDirectory, PosixFilePermissions.fromString("rwxr-xr-x"));
+
+    Files.setPosixFilePermissions(sourceFile, PosixFilePermissions.fromString("rw-r--r--"));
+  }
+
+  private void deleteDirectory(Path directory) {
+    if (directory == null || !Files.exists(directory)) {
+      return;
+    }
+
+    try (var paths = Files.walk(directory)) {
+      paths
+          .sorted(Comparator.reverseOrder())
+          .forEach(path -> {
+            try {
+              Files.deleteIfExists(path);
+
+            } catch (IOException exception) {
+              System.err.println("Could not delete " + path);
+            }
+          });
+
+    } catch (IOException exception) {
+      System.err.println("Cleanup failed: " + exception.getMessage());
+    }
+  }
 }
