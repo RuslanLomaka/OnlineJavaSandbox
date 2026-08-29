@@ -156,7 +156,7 @@ const javaWords = [
         const code = editor.getValue();
 
         const variablePattern =
-            /\b(?:int|long|double|float|boolean|char|byte|short|String|Integer|Long|Double|Boolean|Character|Object|StringBuilder|List|ArrayList|LinkedList|Map|HashMap|Set|HashSet|Queue|Deque)\s*(?:<[^;=]+>)?\s+([a-zA-Z_$][\w$]*)/g;
+            /\b(?:int|long|double|float|boolean|char|byte|short|String|Integer|Long|Double|Boolean|Character|Object|StringBuilder|List|ArrayList|LinkedList|Map|HashMap|Set|HashSet|Queue|Deque)(?:\s*<[^;=]+>)?\s+([a-zA-Z_$][\w$]*)/g;
 
         const variables = [];
         const names = new Set();

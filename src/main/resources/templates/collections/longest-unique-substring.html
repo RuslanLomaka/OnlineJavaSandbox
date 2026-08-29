@@ -13,12 +13,16 @@
           th:href="@{/css/site.css}">
 
     <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css"
+          integrity="sha384-zaeBlB/vwYsDRSlFajnDd7OydJ0cWk+c2OWybl3eSUf6hW2EbhlCsQPqKr3gkznT"
+          crossorigin="anonymous">
 
     <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+          href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css"
+          integrity="sha384-eZTPTN0EvJdn23s24UDYJmUM2T7C2ZFa3qFLypeBruJv8mZeTusKUAO/j5zPAQ6l"
+          crossorigin="anonymous">
 
-<link rel="stylesheet" th:href="@{/css/longest-unique-substring.css}">
+    <link rel="stylesheet" th:href="@{/css/longest-unique-substring.css}">
 </head>
 
 <body>
@@ -55,7 +59,8 @@
             <div class="example">"bcd" is a substring of "abcde".
 
                 "ace" is not a substring because its characters
-                are not next to each other.</div>
+                are not next to each other.
+            </div>
 
             <h2>Method</h2>
 
@@ -112,7 +117,8 @@
 
                 Explanation:
                 "abc" is the longest substring without repeated
-                characters.</div>
+                characters.
+            </div>
 
             <h2>Example 2</h2>
 
@@ -120,7 +126,8 @@
                 "bbbbb"
 
                 Output:
-                1</div>
+                1
+            </div>
 
             <h2>Example 3</h2>
 
@@ -131,7 +138,8 @@
                 3
 
                 Explanation:
-                "wke" is a valid answer.</div>
+                "wke" is a valid answer.
+            </div>
 
             <h2>Important edge case</h2>
 
@@ -142,7 +150,8 @@
                 2
 
                 The left side of the current window must never
-                move backwards.</div>
+                move backwards.
+            </div>
 
             <h2>Hints</h2>
 
@@ -193,6 +202,7 @@
             <pre class="method-signature top">public static int longestUniqueLength(String text) {</pre>
 
             <div class="editor-wrapper">
+                <label for="solutionCode" class="sr-only">Solution code</label>
                 <textarea id="solutionCode">    // Write your solution here
 
     return 0;</textarea>
@@ -215,13 +225,21 @@
 
 </main>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"
+        integrity="sha384-ZYmwuq4n2gOcNxMSiJ6jyTj+BbIrilr7p6dlq6q5nmSWKmsH9UU4K1qqjycMkfmR"
+        crossorigin="anonymous"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"
+        integrity="sha384-o9m634t2Hy35pPNKd9Xe16ntbSw11jCOuKPDrzQGXI8k87L2JZthaA3rwmJjnF7Z"
+        crossorigin="anonymous"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"
+        integrity="sha384-69mJoUoPPF/C7qPs6lLjvXvrt6w225+rmxWqGO3a1glVjITdnnwPQOtG9FRTd2Ni"
+        crossorigin="anonymous"></script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"
+        integrity="sha384-LjCI3E8qhhxXZvu7+FCvqx9eZYSowFvuJ7z54KsgI/BDPGKEuysqCg/vYiKHvC4Y"
+        crossorigin="anonymous"></script>
 
 <script th:src="@{/js/longest-unique-substring.js}"></script>
 

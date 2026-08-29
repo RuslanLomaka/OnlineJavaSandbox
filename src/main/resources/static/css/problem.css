@@ -279,7 +279,7 @@
     padding: 11px 22px;
     border: none;
     border-radius: 7px;
-    background: #2ea44f;
+    background: #24863d;
     color: white;
     font-size: 14px;
     font-weight: 700;
@@ -288,7 +288,7 @@
 
 /* Run tests hover state. */
 .run-tests-button:hover {
-    background: #24863d;
+    background: #1f7a37;
 }
 
 /* Run tests disabled state. */
