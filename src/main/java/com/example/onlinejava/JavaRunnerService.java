@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class JavaRunnerService {
+  private static final Logger l = LoggerFactory.getLogger(JavaRunnerService.class);
 
   /**
    * The Docker image used for running Java code in a sandboxed
@@ -241,7 +244,7 @@ public class JavaRunnerService {
           Thread.sleep(OUTPUT_WATCH_INTERVAL_MILLIS);
         }
       } catch (IOException exception) {
-        System.err.println("Could not check output size: " + exception.getMessage());
+        l.error("Could not check output size: {}", exception.getMessage());
       } catch (InterruptedException exception) {
         Thread
             .currentThread()
@@ -295,7 +298,7 @@ public class JavaRunnerService {
       cleanup.waitFor(3, TimeUnit.SECONDS);
 
     } catch (IOException exception) {
-      System.err.println("Could not remove Docker container: " + exception.getMessage());
+      l.error("Could not remove Docker container: {}", exception.getMessage());
 
     } catch (InterruptedException exception) {
       Thread
@@ -330,12 +333,13 @@ public class JavaRunnerService {
               Files.deleteIfExists(path);
 
             } catch (IOException exception) {
-              System.err.println("Could not delete " + path);
+              l.error("Could not delete {}", path);
             }
           });
 
     } catch (IOException exception) {
-      System.err.println("Cleanup failed: " + exception.getMessage());
+
+      l.error("Cleanup failed: {}", exception.getMessage());
     }
   }
 }

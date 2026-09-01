@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -29,6 +31,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class SandboxReaperService {
+
+  private static final Logger log = LoggerFactory.getLogger(SandboxReaperService.class);
 
   /**
    * Prefix shared by both sandbox container names and sandbox temp
@@ -98,11 +102,11 @@ public class SandboxReaperService {
       if (finished && process.exitValue() == 0) {
         containerIds.addAll(lines);
       } else {
-        System.err.println("docker ps did not exit cleanly; skipping this reaper cycle");
+        log.warn("docker ps did not exit cleanly; skipping this reaper cycle");
       }
 
     } catch (IOException exception) {
-      System.err.println("Could not list sandbox containers: " + exception.getMessage());
+      log.error("Could not list sandbox containers: {}", exception.getMessage());
 
     } catch (InterruptedException exception) {
       Thread.currentThread().interrupt();
@@ -128,8 +132,8 @@ public class SandboxReaperService {
       return Instant.parse(lines.get(0));
 
     } catch (IOException | DateTimeParseException exception) {
-      System.err.println("Could not read start time for container "
-          + containerId + ": " + exception.getMessage());
+      log.error("Could not read start time for container {}: {}", containerId,
+          exception.getMessage());
       return null;
 
     } catch (InterruptedException exception) {
@@ -147,8 +151,8 @@ public class SandboxReaperService {
       process.waitFor(5, TimeUnit.SECONDS);
 
     } catch (IOException exception) {
-      System.err.println("Could not remove orphaned container "
-          + containerId + ": " + exception.getMessage());
+      log.error("Could not remove orphaned container {}: {}", containerId,
+          exception.getMessage());
 
     } catch (InterruptedException exception) {
       Thread.currentThread().interrupt();
@@ -168,7 +172,7 @@ public class SandboxReaperService {
           .forEach(this::deleteDirectory);
 
     } catch (IOException exception) {
-      System.err.println("Could not scan sandbox root for orphans: " + exception.getMessage());
+      log.error("Could not scan sandbox root for orphans: {}", exception.getMessage());
     }
   }
 
@@ -178,8 +182,8 @@ public class SandboxReaperService {
       return isOlderThanThreshold(lastModified);
 
     } catch (IOException exception) {
-      System.err.println("Could not read last-modified time for "
-          + directory + ": " + exception.getMessage());
+      log.error("Could not read last-modified time for {}: {}", directory,
+          exception.getMessage());
       return false;
     }
   }
@@ -197,13 +201,13 @@ public class SandboxReaperService {
               Files.deleteIfExists(path);
 
             } catch (IOException exception) {
-              System.err.println("Could not delete " + path);
+              log.error("Could not delete {}", path);
             }
           });
 
     } catch (IOException exception) {
-      System.err.println("Could not delete orphaned directory "
-          + directory + ": " + exception.getMessage());
+      log.error("Could not delete orphaned directory {}: {}", directory,
+          exception.getMessage());
     }
   }
 

@@ -31,14 +31,16 @@ final class DockerExecutable {
   private static String resolve() {
     String pathEnvironmentVariable = System.getenv("PATH");
 
+    final String docker = "docker";
     if (pathEnvironmentVariable == null) {
-      return "docker";
+      return docker;
     }
 
-    boolean isWindows = System.getProperty("os.name", "")
+    boolean isWindows = System
+        .getProperty("os.name", "")
         .toLowerCase(Locale.ROOT)
         .contains("win");
-    String executableName = isWindows ? "docker.exe" : "docker";
+    String executableName = isWindows ? "docker.exe" : docker;
 
     for (String directory : pathEnvironmentVariable.split(File.pathSeparator)) {
       File candidate = new File(directory, executableName);
@@ -48,6 +50,6 @@ final class DockerExecutable {
       }
     }
 
-    return "docker";
+    return docker;
   }
 }
