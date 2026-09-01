@@ -22,6 +22,11 @@ public class DevSecurityConfig {
    * @param http the security configuration builder
    * @return the configured filter chain
    */
+  // CSRF is safe to disable here: this bean only activates under
+  // @Profile("dev"), which permits every request with no authentication
+  // at all, so there is no authenticated session for a forged
+  // cross-site request to exploit.
+  @SuppressWarnings("java:S4502")
   @Bean
   public SecurityFilterChain devSecurityFilterChain(HttpSecurity http) {
 
