@@ -21,10 +21,9 @@ public class SecurityConfig {
    *
    * @param http the security configuration builder
    * @return the configured filter chain
-   * @throws Exception if the security configuration cannot be built
    */
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) {
 
     http
         .authorizeHttpRequests(authorize -> authorize
