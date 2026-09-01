@@ -1,14 +1,11 @@
 package com.example.onlinejava.problem;
 
-
-/*
-    Using a plain String is not ideal because someone could accidentally write:
-        "easy"
-        "Easy"
-        "EASY"
-        "very-easy"
-    We want only valid values.
-    So, creating enum is better option
+/**
+ * Problem-solving technique associated with a coding problem.
+ *
+ * <p>Modeled as an enum rather than a plain {@code String} so that
+ * values like {@code "sorting"}, {@code "Sorting"}, or a typo like
+ * {@code "sortign"} can't slip in as distinct, inconsistent values.
  */
 public enum ProblemType {
 
