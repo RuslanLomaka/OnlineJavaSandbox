@@ -3,7 +3,7 @@
 > A browser-based Java playground and programming-practice platform built with Spring Boot, Docker, PostgreSQL, Thymeleaf, and GitHub OAuth.
 
 **Status:** Early development  
-**Last updated:** 7 August 2026  
+**Last updated:** 4 September 2026  
 **Live demo:** https://java.ruslanlomaka.org
 
 ## What it does
@@ -24,8 +24,10 @@ Current problem sections:
 
 Current problems:
 
-- Bubble Sort
-- Longest Substring Without Repeating Characters
+- Bubble Sort (Arrays)
+- Two Sum (Arrays)
+- Binary Search (Arrays)
+- Longest Substring Without Repeating Characters (Collections)
 
 ## Tech stack
 
@@ -40,6 +42,8 @@ Current problems:
 - CodeMirror
 - Cloudflare Tunnel
 - Raspberry Pi
+- Checkstyle (Google Java Style)
+- SonarQube Cloud
 
 ## How execution works
 
@@ -65,52 +69,45 @@ CPU restriction
 Process restriction
 Read-only filesystem
 Dropped Linux capabilities
+File descriptor and file size ulimits
 Execution timeout
-Automatic cleanup
+Concurrency limit (bounded number of containers running at once)
+Output size cap (containers are killed if output exceeds the limit)
+Automatic cleanup, plus a scheduled reaper as a safety net for orphaned
+  containers/directories
+Docker image pinned by digest, not by a mutable tag
 ```
+
+Memory limits (`--memory`) are set on the container but are not
+currently enforced on the host, so this is not yet a real resource
+guarantee — see [Current limitations](#current-limitations).
 
 This is still an experimental project and not yet fully hardened for unrestricted public code execution.
 
 ## Current architecture
 
-The project started as a fast prototype.
+The project started as a fast prototype, and one part of the planned refactor is done: Arrays problems now go through a generic, data-driven path instead of one hand-written page per problem.
 
-Some problem pages currently contain too many responsibilities:
+- Each Arrays problem is a small Java class (e.g. `BubbleSortProblem`) implementing `ProblemDefinition`, registered in `ProblemRegistry`.
+- One controller route (`/problems/{category}/{slug}`) and one Thymeleaf template (`problem.html`) render every Arrays problem.
+- One shared script (`problem.js`) drives the editor and submission flow for all of them.
+- The full test harness (imports, student code, hidden tests) is assembled **server-side** (`ProblemDefinition.buildTestSource`) and only the student's method body is ever sent to the browser — hidden tests are no longer visible via view-source or the Network tab for these problems.
 
-- description;
-- starter code;
-- tests;
-- Java source generation;
-- console formatting;
-- page-specific JavaScript.
+This has **not** happened yet for the Collections/Algorithms categories: `Longest Substring Without Repeating Characters` is still its own hand-written page, CSS file, and JS file, and it still assembles the complete test source (including hidden tests) client-side and posts it to the generic `/sandbox/run` endpoint — so the original "hidden tests aren't actually hidden" problem still applies to that one problem specifically.
 
-The next major refactoring goal is to separate problem content from rendering and execution.
-
-A future problem may look like:
-
-```text
-problems/
-└── collections/
-    └── longest-unique-substring/
-        ├── problem.yaml
-        ├── statement.md
-        ├── starter.java
-        └── tests.java
-```
-
-Then one generic controller and one generic template can render all problems.
+Migrating the remaining problems to the same pattern used for Arrays is the next concrete step, not a redesign — the generic controller, template, and script already exist and just need to be reused.
 
 ## Roadmap
 
 ### Near term
 
-- [ ] refactor the problem system;
-- [ ] create reusable problem definitions;
-- [ ] separate hidden tests from HTML;
-- [ ] create a generic problem page;
+- [x] create reusable problem definitions;
+- [x] separate hidden tests from HTML (done for Arrays problems);
+- [x] create a generic problem page;
+- [x] add output-size limits;
+- [x] add execution queue (concurrency limit);
+- [ ] migrate the Collections/Algorithms problems onto the generic problem page;
 - [ ] improve error handling;
-- [ ] add output-size limits;
-- [ ] add execution queue and rate limiting;
 - [ ] improve mobile layout;
 - [ ] add more Java problems.
 
@@ -126,8 +123,8 @@ Then one generic controller and one generic template can render all problems.
 
 ### Security
 
-- [ ] restore working memory limits;
-- [ ] limit concurrent runner containers;
+- [x] limit concurrent runner containers;
+- [ ] restore working memory limits (the `--memory` flag is set, but not currently enforced on the host running the containers);
 - [ ] separate the runner from the web application;
 - [ ] reduce Docker socket exposure;
 - [ ] add abuse prevention;
@@ -168,8 +165,8 @@ I am ready to explain:
 - how submitted Java code runs in Docker;
 - how the Raspberry Pi deployment works;
 - how PostgreSQL and Docker Compose are configured;
-- how CI/CD should work;
-- why the current architecture needs refactoring.
+- how the CI/CD pipeline and quality gates work;
+- why the remaining problem pages still need migrating to the generic architecture.
 
 What I need from contributors:
 
@@ -303,7 +300,13 @@ docker compose logs -f postgres
 docker compose down
 ```
 
+## CI/CD
+
+Every pull request against `master` runs Checkstyle, the full test suite against a real PostgreSQL service container, and a SonarQube Cloud analysis with a quality gate that blocks merging on new bugs, vulnerabilities, or security hotspots. Pushes to `master` additionally deploy automatically: GitHub Actions connects to the Raspberry Pi over Tailscale, resets it to `origin/master`, and runs `docker compose up -d --build`. There is no staging environment — a merge to `master` goes straight to the live site.
+
 ## Manual deployment
+
+Only needed if the automatic deployment above isn't available:
 
 ```bash
 cd ~/projects/OnlineJavaSandbox
@@ -317,12 +320,9 @@ docker compose up -d --build
 - no scores;
 - no comments;
 - no user profiles;
-- no execution queue;
-- no strict output limit;
-- no working memory limit on the current host;
-- problem logic is still mixed with HTML and JavaScript;
-- deployment is manual;
-- CI/CD is not yet reliable.
+- no working memory limit on the current host (the container flag is set but not enforced there);
+- problem logic is still mixed with HTML and JavaScript for the Collections/Algorithms problems (Arrays problems are already migrated to the generic architecture, see [Current architecture](#current-architecture));
+- no database or user entities yet (still file/code-defined problems, nothing persisted).
 
 ## Author
 
