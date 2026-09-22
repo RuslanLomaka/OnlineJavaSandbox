@@ -3,7 +3,7 @@
 > A browser-based Java playground and programming-practice platform built with Spring Boot, Docker, PostgreSQL, Thymeleaf, and GitHub OAuth.
 
 **Status:** Early development  
-**Last updated:** 4 September 2026  
+**Last updated:** 22 September 2026  
 **Live demo:** https://java.ruslanlomaka.org
 
 ## What it does
@@ -39,6 +39,7 @@ Current problems:
 - PostgreSQL
 - Docker
 - Docker Compose
+- RabbitMQ
 - CodeMirror
 - Cloudflare Tunnel
 - Raspberry Pi
@@ -47,10 +48,17 @@ Current problems:
 
 ## How execution works
 
+Code execution goes through RabbitMQ rather than being handled directly by the
+web request thread:
+
 ```text
 Browser
   ↓
-Spring Boot
+Spring Boot controller (SandboxExecutionGateway)
+  ↓
+RabbitMQ queue
+  ↓
+Listener (SandboxExecutionListener) — same app process, separate thread
   ↓
 Temporary Main.java
   ↓
@@ -58,8 +66,22 @@ Disposable Docker container
   ↓
 javac + java
   ↓
+Result sent back through RabbitMQ (direct reply-to)
+  ↓
 Output returned to browser
 ```
+
+The listener runs in the same Spring Boot process as the web tier — this isn't
+a separate deployable service (that's still a future roadmap item, see
+[Security](#security)). RabbitMQ is used here as a real request/reply hop
+(an RPC call over a message queue), not just for background events.
+
+Every request is tagged with a random correlation ID, generated once per
+submission and attached to every log line for that request's whole journey —
+controller, queue, listener, container start/finish, and reply — via SLF4J's
+MDC. Run `docker compose logs -f app | grep <the-id>` to see one submission's
+full path end to end, which is especially useful for debugging on the
+Raspberry Pi where there's no separate log aggregation tool.
 
 Runner containers currently use:
 
@@ -96,6 +118,10 @@ The project started as a fast prototype, and one part of the planned refactor is
 This has **not** happened yet for the Collections/Algorithms categories: `Longest Substring Without Repeating Characters` is still its own hand-written page, CSS file, and JS file, and it still assembles the complete test source (including hidden tests) client-side and posts it to the generic `/sandbox/run` endpoint — so the original "hidden tests aren't actually hidden" problem still applies to that one problem specifically.
 
 Migrating the remaining problems to the same pattern used for Arrays is the next concrete step, not a redesign — the generic controller, template, and script already exist and just need to be reused.
+
+Separately, code execution itself now goes through RabbitMQ as a real request/reply
+hop instead of being called directly — see [How execution works](#how-execution-works)
+for the full flow and why.
 
 ## Roadmap
 
@@ -163,6 +189,8 @@ I am ready to explain:
 - how GitHub OAuth was configured;
 - how Spring Security protects the application;
 - how submitted Java code runs in Docker;
+- how RabbitMQ is used as a request/reply hop for code execution, and how
+  correlation-ID logging traces one request across it;
 - how the Raspberry Pi deployment works;
 - how PostgreSQL and Docker Compose are configured;
 - how the CI/CD pipeline and quality gates work;
@@ -207,7 +235,12 @@ You do not need to configure the full production environment just to contribute 
 
 ## Development mode
 
-Development mode is available for contributors who want to run and change the project locally without configuring PostgreSQL, GitHub OAuth credentials, an `.env` file or a production deployment.
+Development mode is available for contributors who want to run and change the
+project locally without configuring GitHub OAuth credentials or a production
+deployment. It still needs a local RabbitMQ container and a small `.env` file
+now, since code execution always goes through RabbitMQ regardless of profile
+(see [How execution works](#how-execution-works)) — PostgreSQL is the only
+piece dev mode skips entirely.
 
 ### Requirements
 
@@ -245,6 +278,26 @@ sudo usermod -aG docker "$USER"
 
 Log out and back in before continuing so the new group membership takes effect.
 
+Create a `.env` file with just RabbitMQ credentials (dev mode doesn't need
+the Postgres or GitHub OAuth values from `env.example`, only these two):
+
+```env
+RABBITMQ_USER=
+RABBITMQ_PASSWORD=
+```
+
+Start RabbitMQ (only this one service, not the whole `compose.yaml` stack —
+dev mode runs the app itself directly via IntelliJ, not in Docker):
+
+```bash
+docker compose up -d rabbitmq
+```
+
+The first run downloads the `rabbitmq` image automatically; no separate
+`docker pull` needed. Confirm it's up with `docker compose ps`, and optionally
+check the management UI at `http://localhost:15672` (log in with the
+credentials from your `.env`).
+
 ### Run with IntelliJ IDEA
 
 1. Open the project in IntelliJ IDEA.
@@ -260,10 +313,14 @@ Development mode:
 - does not connect to PostgreSQL;
 - disables template and static-resource caching;
 - binds the web server to `127.0.0.1`;
+- connects to the RabbitMQ container started above (`127.0.0.1:5672`) to run
+  submitted code, same request/reply flow as production uses;
 - runs submitted Java code in restricted Docker containers;
 - disables networking inside runner containers.
 
-Development mode is intended for trusted local machines. Stop the application when you are finished working.
+Development mode is intended for trusted local machines. Stop the application
+(and, if you're done for a while, `docker compose stop rabbitmq`) when you are
+finished working.
 
 ## Production-like local setup
 
@@ -286,9 +343,14 @@ POSTGRES_PASSWORD=
 
 SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/online_java
 DOCKER_API_VERSION=1.41
+
+RABBITMQ_USER=
+RABBITMQ_PASSWORD=
 ```
 
-Do not commit `.env`.
+Do not commit `.env`. Deploying to a new host (including the Raspberry Pi)
+means setting all of these there manually — they are never carried over by a
+`git pull`/deploy, since `.env` is gitignored on purpose.
 
 ## Useful commands
 
@@ -297,12 +359,27 @@ docker compose up -d --build
 docker compose ps
 docker compose logs -f app
 docker compose logs -f postgres
+docker compose logs -f rabbitmq
 docker compose down
 ```
+
+To trace one code submission's full journey (web request through RabbitMQ to
+the Docker container and back), grab the correlation ID from the start of any
+log line and grep for it:
+
+```bash
+docker compose logs -f app | grep <correlation-id>
+```
+
+RabbitMQ's management UI is available at `http://<host>:15672` (Pi or
+localhost) using the `RABBITMQ_USER`/`RABBITMQ_PASSWORD` from `.env` — useful
+for watching queue depth while multiple submissions run concurrently.
 
 ## CI/CD
 
 Every pull request against `master` runs Checkstyle, the full test suite against a real PostgreSQL service container, and a SonarQube Cloud analysis with a quality gate that blocks merging on new bugs, vulnerabilities, or security hotspots. Pushes to `master` additionally deploy automatically: GitHub Actions connects to the Raspberry Pi over Tailscale, resets it to `origin/master`, and runs `docker compose up -d --build`. There is no staging environment — a merge to `master` goes straight to the live site.
+
+CI does not run a RabbitMQ service — verified that the test suite still passes without one reachable, since Spring AMQP retries connecting in the background rather than failing application startup. The only cost is a noisy (harmless) connection-refused stack trace in the CI test logs.
 
 ## Manual deployment
 
@@ -322,7 +399,8 @@ docker compose up -d --build
 - no user profiles;
 - no working memory limit on the current host (the container flag is set but not enforced there);
 - problem logic is still mixed with HTML and JavaScript for the Collections/Algorithms problems (Arrays problems are already migrated to the generic architecture, see [Current architecture](#current-architecture));
-- no database or user entities yet (still file/code-defined problems, nothing persisted).
+- no database or user entities yet (still file/code-defined problems, nothing persisted);
+- code execution now has a new dependency: if RabbitMQ is down or unreachable, submissions fail gracefully (a clear error message, not a crash), but the app cannot run any code at all until it's back — a single point of failure that didn't exist when execution was a direct method call.
 
 ## Author
 
