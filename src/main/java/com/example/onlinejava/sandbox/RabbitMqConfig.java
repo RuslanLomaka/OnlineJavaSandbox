@@ -1,4 +1,4 @@
-package com.example.onlinejava;
+package com.example.onlinejava.sandbox;
 
 import org.springframework.boot.amqp.autoconfigure.RabbitTemplateCustomizer;
 import org.springframework.context.annotation.Bean;

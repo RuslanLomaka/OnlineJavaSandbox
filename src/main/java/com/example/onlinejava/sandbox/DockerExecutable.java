@@ -1,4 +1,4 @@
-package com.example.onlinejava;
+package com.example.onlinejava.sandbox;
 
 import java.io.File;
 import java.util.Locale;

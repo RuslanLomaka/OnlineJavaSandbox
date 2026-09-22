@@ -1,4 +1,4 @@
-package com.example.onlinejava;
+package com.example.onlinejava.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

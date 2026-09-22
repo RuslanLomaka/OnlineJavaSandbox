@@ -23,7 +23,7 @@ Checkstyle (Google style, `google_checks.xml`) runs in the Maven `validate` phas
 
 Two modes, both documented in `readme.md`:
 
-- **Dev mode** (no Postgres/OAuth/`.env` needed): run `OnlineJavaApplication` with Spring profile `dev` active, then open `http://localhost:8080/sandbox`. This activates `DevSecurityConfig` (permits all requests, no login) instead of `SecurityConfig`, and `application-dev.properties` disables the datasource/JPA autoconfiguration and Thymeleaf caching.
+- **Dev mode** (no Postgres/OAuth needed, but a local RabbitMQ container and a minimal `.env` with `RABBITMQ_USER`/`RABBITMQ_PASSWORD` are required, see `readme.md`): run `OnlineJavaApplication` with Spring profile `dev` active, then open `http://localhost:8080/sandbox`. This activates `security.DevSecurityConfig` (permits all requests, no login) instead of `security.SecurityConfig`, and `application-dev.properties` disables the datasource/JPA autoconfiguration and Thymeleaf caching.
 - **Production-like local setup**: `cp env.example .env`, fill in GitHub OAuth + Postgres credentials, then `docker compose up -d --build`. This uses `application-prod.properties` and requires real GitHub OAuth credentials and a running Postgres.
 
 Either way, before first run: `docker pull eclipse-temurin:21-jdk` — this is the image the sandbox runner containers use, and code execution will fail without it. `docker ps` must work without `sudo`/elevated permissions.
@@ -34,18 +34,20 @@ Java 17 is the Maven-declared target (`pom.xml`), but JDK 21 is what CI and the 
 
 ### Request flow for code execution
 
-`SandboxController` (`POST /sandbox/run`, plain-text body) hands the submitted source straight to `JavaRunnerService.run()`, which:
+All code-execution classes live in `com.example.onlinejava.sandbox`. `SandboxController` (`POST /sandbox/run` and `POST /problems/{slug}/run`, plain-text body) does not run code directly -- it hands the source to `SandboxExecutionGateway`, which sends it to RabbitMQ and blocks (`RabbitTemplate.convertSendAndReceive`, using RabbitMQ's direct reply-to) until a reply arrives. `SandboxExecutionListener` consumes the queue on a separate thread and calls `JavaRunnerService.run()`, which:
 
 1. Writes the source to a temp dir under `sandbox.root` as `Main.java` (submissions must define a public class `Main`).
 2. Shells out to `docker run` via `ProcessBuilder` with a heavily locked-down container: `--network none`, `--cap-drop ALL`, `--pids-limit 32`, `--cpus 2`, `--read-only` root filesystem with only a small `tmpfs` at `/work` writable, and (in prod) `--security-opt no-new-privileges`. The source is bind-mounted read-only and copied into `/work` before `javac`/`java` run.
 3. Waits up to `EXECUTION_TIMEOUT_SECONDS` (100s), force-kills and returns a timeout message if exceeded.
 4. Always removes the named container and deletes the temp dir in a `finally` block, regardless of outcome.
 
-`sandbox.root` and `sandbox.no-new-privileges` are externalized via `@Value` and differ between dev/prod properties files (dev disables `no-new-privileges` and points at `${user.home}/.online-java/runs`; prod uses `/tmp/online-java-runs`).
+The listener returns the result, which Spring routes back through RabbitMQ to the waiting gateway call. `RabbitMqConfig` enables `userCorrelationId` on the auto-configured `RabbitTemplate` -- without it, the template silently overwrites the caller's correlation ID with its own for internal reply-tracking. A random ID per request is propagated through SLF4J's MDC across the gateway, listener, and `JavaRunnerService`, so one submission's full journey is grep-able in `docker compose logs -f app` (see `readme.md`'s "How execution works").
+
+`sandbox.root` and `sandbox.no-new-privileges` are externalized via `@Value` and differ between dev/prod properties files (dev disables `no-new-privileges` and points at `${user.home}/.online-java/runs`; prod uses `/tmp/online-java-runs`). Both dev and prod connect to RabbitMQ (dev at `127.0.0.1:5672`, prod at the `rabbitmq` Compose service name) -- execution now depends on RabbitMQ regardless of profile.
 
 ### Security configuration split
 
-Two mutually exclusive `SecurityFilterChain` beans, selected by Spring profile:
+Two mutually exclusive `SecurityFilterChain` beans in `com.example.onlinejava.security`, selected by Spring profile:
 
 - `SecurityConfig` (`@Profile("!dev")`): OAuth2 login required for everything except `/`, `/index.html`, `/css/login.css`, `/oauth2/**`, `/login/**`; CSRF is disabled specifically for `/sandbox/run` (since it's called via `fetch`/JS, not a form).
 - `DevSecurityConfig` (`@Profile("dev")`): permits everything, disables CSRF entirely. Local-only.
