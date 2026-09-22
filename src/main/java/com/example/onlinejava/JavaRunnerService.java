@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class JavaRunnerService {
-  private static final Logger l = LoggerFactory.getLogger(JavaRunnerService.class);
+  private static final Logger log = LoggerFactory.getLogger(JavaRunnerService.class);
 
   /**
    * The Docker image used for running Java code in a sandboxed
@@ -214,6 +214,7 @@ public class JavaRunnerService {
 
   private String executeDockerCommand(final List<String> dockerCommand, final Path outputFile)
       throws IOException, InterruptedException {
+    log.info("Starting container");
     Process dockerProcess = new ProcessBuilder(dockerCommand)
         .redirectErrorStream(true)
         .redirectOutput(outputFile.toFile())
@@ -229,7 +230,7 @@ public class JavaRunnerService {
       dockerProcess.waitFor(2, TimeUnit.SECONDS);
       return "Execution timed out.";
     }
-
+    log.info("Container finished, exitCode={}", dockerProcess.exitValue());
     return formatOutput(outputFile, dockerProcess.exitValue());
   }
 
@@ -244,7 +245,7 @@ public class JavaRunnerService {
           Thread.sleep(OUTPUT_WATCH_INTERVAL_MILLIS);
         }
       } catch (IOException exception) {
-        l.error("Could not check output size: {}", exception.getMessage());
+        log.error("Could not check output size: {}", exception.getMessage());
       } catch (InterruptedException exception) {
         Thread
             .currentThread()
@@ -298,7 +299,7 @@ public class JavaRunnerService {
       cleanup.waitFor(3, TimeUnit.SECONDS);
 
     } catch (IOException exception) {
-      l.error("Could not remove Docker container: {}", exception.getMessage());
+      log.error("Could not remove Docker container: {}", exception.getMessage());
 
     } catch (InterruptedException exception) {
       Thread
@@ -333,13 +334,13 @@ public class JavaRunnerService {
               Files.deleteIfExists(path);
 
             } catch (IOException exception) {
-              l.error("Could not delete {}", path);
+              log.error("Could not delete {}", path);
             }
           });
 
     } catch (IOException exception) {
 
-      l.error("Cleanup failed: {}", exception.getMessage());
+      log.error("Cleanup failed: {}", exception.getMessage());
     }
   }
 }
