@@ -1,4 +1,4 @@
-package com.example.onlinejava;
+package com.example.onlinejava.sandbox;
 
 import com.example.onlinejava.problem.ProblemDefinition;
 import com.example.onlinejava.problem.ProblemRegistry;

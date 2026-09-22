@@ -1,4 +1,4 @@
-package com.example.onlinejava;
+package com.example.onlinejava.sandbox;
 
 import java.util.UUID;
 import org.slf4j.Logger;
