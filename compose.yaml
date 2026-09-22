@@ -28,12 +28,14 @@ services:
     container_name: rabbitmq
     hostname: rabbitmq
     restart: always
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     ports:
       - 5672:5672
       - 15672:15672
-    environment:
-      RABBITMQ_DEFAULT_USER: kalo
-      RABBITMQ_DEFAULT_PASS: kalo
     configs:
       - source: rabbitmq-plugins
         target: /etc/rabbitmq/enabled_plugins
