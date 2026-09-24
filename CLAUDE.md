@@ -50,9 +50,9 @@ The listener returns the result, which Spring routes back through RabbitMQ to th
 Two mutually exclusive `SecurityFilterChain` beans in `com.example.onlinejava.security`, selected by Spring profile:
 
 - `SecurityConfig` (`@Profile("!dev")`): OAuth2 login required for everything except `/`, `/index.html`, `/css/login.css`, `/oauth2/**`, `/login/**`; CSRF is disabled specifically for `/sandbox/run` (since it's called via `fetch`/JS, not a form).
-- `DevSecurityConfig` (`@Profile("dev")`): permits everything, disables CSRF entirely. Local-only.
+- `DevSecurityConfig` (`@Profile("dev")`): permits everything, disables CSRF entirely, and signs requests in as the `local-dev` user. Local-only.
 
-`PageController` reads the authenticated `OAuth2User` principal (nullable — null in dev mode, where a "Local developer" fallback name is used) to render pages.
+`user.CurrentUserModelAdvice` adds the signed-in user's login to every page model as `username` (used by the navbar).
 
 ### Problem pages
 
