@@ -358,3 +358,15 @@
     }
 }
 
+
+/* Link from a problem to its discussion page. */
+.discussion-link {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: #9ab8ff;
+    text-decoration: none;
+}
+
+.discussion-link:hover {
+    color: #73ff73;
+}

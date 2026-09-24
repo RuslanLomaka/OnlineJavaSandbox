@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <th:block th:replace="~{fragments/csrf :: meta}"></th:block>
+
+    <title th:text="${problem.title} + ' - Discussion'">Discussion</title>
+
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+
+    <!-- Markdown editor (EasyMDE) and its toolbar icons. -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/easymde@2.21.0/dist/easymde.min.css"
+          integrity="sha384-ZoLYv3S+AsZX+zhbN1D1+WPpc8f+DmLfxfgw+qn0Nq8wJPOYQQXEW5ZrRhcGozlG"
+          crossorigin="anonymous">
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+          integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+          crossorigin="anonymous">
+
+    <!-- Syntax highlighting theme for code blocks inside posts. -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.2/styles/github-dark.min.css"
+          integrity="sha384-wH75j6z1lH97ZOpMOInqhgKzFkAInZPPSPlZpYKYTOqsaizPvhQZmAtLcPKXpLyH"
+          crossorigin="anonymous">
+
+    <link rel="stylesheet" th:href="@{/css/discussion.css}">
+</head>
+
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<!-- The problem slug tells discussion.js which API URLs to call. -->
+<main class="container discussion"
+      th:attr="data-problem-slug=${problem.slug}">
+
+    <header class="discussion-header">
+        <a class="back-link"
+           th:href="@{/problems/{category}/{slug}(category=${#strings.toLowerCase(problem.category)},slug=${problem.slug})}">
+            &larr; Back to problem
+        </a>
+        <h1>
+            <span th:text="${problem.title}">Problem</span>
+            <span class="discussion-subtitle">Discussion</span>
+        </h1>
+        <p class="discussion-intro">
+            Share approaches, ask questions and help each other. Markdown is supported:
+            use <code>```java</code> fences for code, paste or drop screenshots, and add emoji.
+        </p>
+    </header>
+
+    <!-- ==================== COMPOSER ==================== -->
+    <section class="composer" aria-labelledby="composerTitle">
+        <h2 id="composerTitle">Start a new thread</h2>
+
+        <!-- Shown while replying to or editing a post. -->
+        <div id="composerContext" class="composer-context" hidden>
+            <span id="composerContextText"></span>
+            <button id="composerCancel" type="button" class="link-button">Cancel</button>
+        </div>
+
+        <label for="composerInput" class="sr-only">Message</label>
+        <textarea id="composerInput"></textarea>
+
+        <div class="composer-actions">
+            <p id="composerError" class="composer-error" role="alert"></p>
+            <button id="composerSubmit" type="button" class="primary-button">Post</button>
+        </div>
+
+        <!-- Emoji picker popover, filled by discussion.js. -->
+        <div id="emojiPopover" class="emoji-popover" hidden></div>
+    </section>
+
+    <!-- ==================== THREADS ==================== -->
+    <section aria-label="Threads">
+        <p id="threadsStatus" class="threads-status" aria-live="polite">Loading discussion…</p>
+        <div id="threads"></div>
+        <button id="loadMore" type="button" class="secondary-button" hidden>Load more threads</button>
+    </section>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.4.16/purify.min.js"
+        integrity="sha384-a7SzOxErzJ3ZpQz0zJ32d67dSitNzPcbfybc/ykU9KJhMgZkwqfSxlhhdJRS+XGL"
+        crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.2/highlight.min.js"
+        integrity="sha384-pZ4gLQJIEk/VKnGk59xUSQK8Ne/erZQR9cpnPXPLB9iN1tXsVkRVfHYGdFYrSkv1"
+        crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/easymde@2.21.0/dist/easymde.min.js"
+        integrity="sha384-mTM6vzy+/UiHrMBClNGViM9qEv0/26iCGqpJKhSzdnjrxbKjO3vkT62ujXQ8B5iv"
+        crossorigin="anonymous"></script>
+
+<!-- emoji-picker-element is vendored (a multi-file ES module can't be SRI-pinned from a CDN). -->
+<script type="module" th:src="@{/vendor/emoji-picker-element-1.29.1/index.js}"></script>
+
+<script th:src="@{/js/csrf.js}"></script>
+<script th:src="@{/js/discussion.js}"></script>
+
+</body>
+</html>

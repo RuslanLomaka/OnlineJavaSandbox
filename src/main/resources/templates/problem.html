@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <th:block th:replace="~{fragments/csrf :: meta}"></th:block>
 
     <!-- Loads the common site styling. -->
     <link rel="stylesheet" th:href="@{/css/site.css}">
@@ -48,6 +49,13 @@
 
             <!-- Displays the problem title. -->
             <h1 th:text="${problem.title}"></h1>
+
+            <!-- Link to the problem's discussion; problem.js adds the post count. -->
+            <a id="discussionLink"
+               class="discussion-link"
+               th:href="@{/problems/{category}/{slug}/discussion(category=${#strings.toLowerCase(problem.category)},slug=${problem.slug})}">
+                💬 Discussion
+            </a>
 
             <!-- Displays the problem description. -->
             <p th:text="${problem.description}"></p>
@@ -172,6 +180,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"
         integrity="sha384-LjCI3E8qhhxXZvu7+FCvqx9eZYSowFvuJ7z54KsgI/BDPGKEuysqCg/vYiKHvC4Y"
         crossorigin="anonymous"></script>
+
+<!-- Supplies csrfHeaders() for the Run Tests request. -->
+<script th:src="@{/js/csrf.js}"></script>
 
 <!-- Generic problem-page JavaScript. -->
 <script th:src="@{/js/problem.js}"></script>

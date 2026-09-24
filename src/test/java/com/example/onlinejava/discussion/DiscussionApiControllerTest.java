@@ -153,7 +153,7 @@ class DiscussionApiControllerTest {
   }
 
   private static PostView samplePost() {
-    return new PostView(1L, new AuthorView("alice", "Alice", null), "<p>hello</p>",
+    return new PostView(1L, new AuthorView("alice", "Alice", null), "<p>hello</p>", "hello",
         Instant.now(), null, false, true, null, List.of());
   }
 }

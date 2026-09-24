@@ -9,6 +9,8 @@ import java.util.List;
  * @param id post id
  * @param author author profile
  * @param bodyHtml sanitized HTML body (empty if deleted)
+ * @param markdown raw Markdown for the edit form; only sent for the viewer's
+ *     own live posts, otherwise {@code null}
  * @param createdAt creation time
  * @param editedAt last edit time, or {@code null}
  * @param deleted whether the post was deleted
@@ -21,6 +23,7 @@ public record PostView(
     long id,
     AuthorView author,
     String bodyHtml,
+    String markdown,
     Instant createdAt,
     Instant editedAt,
     boolean deleted,

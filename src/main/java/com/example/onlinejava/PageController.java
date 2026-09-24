@@ -110,24 +110,11 @@ public class PageController {
       @PathVariable final String slug,
       final Model model
   ) {
-    final ProblemDefinition problemDefinition =
-        problemRegistry.getProblem(slug);
-
-    if (problemDefinition == null) {
-      throw new ResponseStatusException(
-          HttpStatus.NOT_FOUND,
-          "Problem not found"
-      );
-    }
-
-    final Problem problem = problemDefinition.getProblem();
-
-    if (!problem.getCategory().equalsIgnoreCase(category)) {
-      throw new ResponseStatusException(
-          HttpStatus.NOT_FOUND,
-          "Problem not found"
-      );
-    }
+    final Problem problem = problemRegistry.findProblem(category, slug)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Problem not found"
+        ));
 
     model.addAttribute("problem", problem);
 

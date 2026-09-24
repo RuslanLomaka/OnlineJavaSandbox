@@ -39,7 +39,9 @@ if (runTestsButton && testConsole && mainContainer) {
             const response = await fetch(`/problems/${slug}/run`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "text/plain"
+                    "Content-Type": "text/plain",
+                    // Required in production: this endpoint is CSRF-protected.
+                    ...csrfHeaders()
                 },
                 body: code
             });
@@ -61,4 +63,24 @@ if (runTestsButton && testConsole && mainContainer) {
             runTestsButton.disabled = false;
         }
     });
+}
+
+// Shows the number of discussion posts next to the "Discussion" link.
+const discussionLink = document.getElementById("discussionLink");
+
+if (discussionLink && mainContainer) {
+    const slug = mainContainer.dataset.problemSlug;
+
+    fetch(`/api/problems/${encodeURIComponent(slug)}/summary`, {
+        headers: { Accept: "application/json" }
+    })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((summary) => {
+            if (summary) {
+                discussionLink.textContent = `💬 Discussion (${summary.postCount})`;
+            }
+        })
+        .catch(() => {
+            // The count is optional; leave the plain link.
+        });
 }
