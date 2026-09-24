@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -56,6 +57,9 @@ class DiscussionServiceTest {
   @Autowired
   private AttachmentRepository attachments;
 
+  @Autowired
+  private TestEntityManager entityManager;
+
   private long alice;
 
   private long bob;
@@ -77,6 +81,9 @@ class DiscussionServiceTest {
     assertThat(page.threads().get(0).root().bodyHtml()).isEqualTo("<p><strong>hi</strong></p>");
     assertThat(page.threads().get(0).root().author().login()).isEqualTo("alice");
     assertThat(page.threads().get(0).root().own()).isFalse();
+    assertThat(page.threads().get(0).root().markdown()).isNull();
+    assertThat(service.listThreads(SLUG, 0, alice).threads().get(0).root().markdown())
+        .isEqualTo("**hi**");
   }
 
   @Test
@@ -241,6 +248,23 @@ class DiscussionServiceTest {
 
     assertThat(attachments.findById(shot).orElseThrow().getPostId()).isEqualTo(post.id());
     assertThat(post.bodyHtml()).contains("<img src=\"/attachments/" + shot + "\"");
+  }
+
+  @Test
+  void replyWithScreenshotWorksWhenEntitiesAreNotYetLoaded() throws IOException {
+    // Regression: claiming attachments clears the persistence context; the
+    // response must still be built when authors are lazy proxies, as they
+    // are in a real request.
+    final PostView root = service.createPost(SLUG, bob, new CreatePostRequest("root", null));
+    final UUID shot = attachmentService.upload(alice, tinyPng()).id();
+    entityManager.flush();
+    entityManager.clear();
+
+    final PostView reply = service.createPost(SLUG, alice,
+        new CreatePostRequest("![s](/attachments/" + shot + ")", root.id()));
+
+    assertThat(reply.author().login()).isEqualTo("alice");
+    assertThat(reply.replyTo().authorLogin()).isEqualTo("bob");
   }
 
   @Test

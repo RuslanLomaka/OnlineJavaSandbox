@@ -168,8 +168,11 @@ public class DiscussionService {
     final AppUser author = users.getReferenceById(authorId);
     final DiscussionPost post = posts.save(
         new DiscussionPost(slug, author, replyTo, request.body(), clock.instant()));
+    // Build the response before claiming: the claim is a bulk update that
+    // clears the persistence context, detaching the (lazy) entities.
+    final PostView view = toView(post, authorId, Map.of());
     claimAttachments(post, authorId);
-    return toView(post, authorId, Map.of());
+    return view;
   }
 
   /**
@@ -183,8 +186,11 @@ public class DiscussionService {
   public PostView editPost(final long postId, final long userId, final String body) {
     final DiscussionPost post = findOwnLivePost(postId, userId);
     post.edit(body, clock.instant());
+    // Build the response before the claim clears the persistence context
+    // (the claim's bulk update flushes this edit first).
+    final PostView view = toView(post, userId, reactionViews(List.of(postId), userId));
     claimAttachments(post, userId);
-    return toView(post, userId, reactionViews(List.of(postId), userId));
+    return view;
   }
 
   /**
@@ -300,14 +306,16 @@ public class DiscussionService {
         target.getId(),
         target.getAuthor().getLogin(),
         target.isDeleted() ? "" : excerpt(target.getBodyMarkdown()));
+    final boolean own = post.isAuthoredBy(viewerId);
     return new PostView(
         post.getId(),
         new AuthorView(author.getLogin(), author.getDisplayName(), author.getAvatarUrl()),
         post.isDeleted() ? "" : markdownRenderer.render(post.getBodyMarkdown()),
+        own && !post.isDeleted() ? post.getBodyMarkdown() : null,
         post.getCreatedAt(),
         post.getEditedAt(),
         post.isDeleted(),
-        post.isAuthoredBy(viewerId),
+        own,
         replyRef,
         reactionsByPost.getOrDefault(post.getId(), List.of()));
   }
