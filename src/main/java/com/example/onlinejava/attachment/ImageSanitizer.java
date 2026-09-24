@@ -4,8 +4,10 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
@@ -50,6 +52,26 @@ public class ImageSanitizer {
    * @param height height in pixels
    */
   public record SanitizedImage(byte[] data, String contentType, int width, int height) {
+
+    @Override
+    public boolean equals(final Object other) {
+      return other instanceof SanitizedImage that
+          && width == that.width
+          && height == that.height
+          && contentType.equals(that.contentType)
+          && Arrays.equals(data, that.data);
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * Objects.hash(contentType, width, height) + Arrays.hashCode(data);
+    }
+
+    @Override
+    public String toString() {
+      return "SanitizedImage[" + contentType + ", " + width + "x" + height + ", "
+          + data.length + " bytes]";
+    }
   }
 
   /**
