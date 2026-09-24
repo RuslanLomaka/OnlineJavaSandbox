@@ -3,6 +3,8 @@ package com.example.onlinejava.user;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.core.GrantedAuthority;
@@ -49,7 +51,9 @@ public final class AppUserPrincipal implements OAuth2User, Serializable {
     this.login = user.getLogin();
     this.displayName = user.getDisplayName();
     this.avatarUrl = user.getAvatarUrl();
-    this.attributes = Map.copyOf(attributes);
+    // Not Map.copyOf: providers return null for empty profile fields (GitHub's
+    // "bio", "company", ...), and Map.copyOf rejects null values.
+    this.attributes = Collections.unmodifiableMap(new LinkedHashMap<>(attributes));
     this.authorities = List.copyOf(authorities);
   }
 
