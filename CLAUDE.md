@@ -23,7 +23,7 @@ Checkstyle (Google style, `google_checks.xml`) runs in the Maven `validate` phas
 
 Two modes, both documented in `readme.md`:
 
-- **Dev mode** (no Postgres/OAuth needed, but a local RabbitMQ container and a minimal `.env` with `RABBITMQ_USER`/`RABBITMQ_PASSWORD` are required, see `readme.md`): run `OnlineJavaApplication` with Spring profile `dev` active, then open `http://localhost:8080/sandbox`. This activates `security.DevSecurityConfig` (permits all requests, no login) instead of `security.SecurityConfig`, and `application-dev.properties` disables the datasource/JPA autoconfiguration and Thymeleaf caching.
+- **Dev mode** (no OAuth needed; requires a local RabbitMQ container, a local PostgreSQL at `127.0.0.1:5432/online_java` (override with `DEV_DATASOURCE_URL`), and a minimal `.env` with `RABBITMQ_USER`/`RABBITMQ_PASSWORD`, see `readme.md`): run `OnlineJavaApplication` with Spring profile `dev` active, then open `http://localhost:8080/sandbox`. This activates `security.DevSecurityConfig` instead of `security.SecurityConfig`: it permits all requests and, via `DevUserAuthenticationFilter`, signs every request in as a fixed `local-dev` user (the filter refuses to start unless `server.address` is loopback). `application-dev.properties` also disables Thymeleaf caching.
 - **Production-like local setup**: `cp env.example .env`, fill in GitHub OAuth + Postgres credentials, then `docker compose up -d --build`. This uses `application-prod.properties` and requires real GitHub OAuth credentials and a running Postgres.
 
 Either way, before first run: `docker pull eclipse-temurin:21-jdk` — this is the image the sandbox runner containers use, and code execution will fail without it. `docker ps` must work without `sudo`/elevated permissions.
@@ -54,9 +54,31 @@ Two mutually exclusive `SecurityFilterChain` beans in `com.example.onlinejava.se
 
 `PageController` reads the authenticated `OAuth2User` principal (nullable — null in dev mode, where a "Local developer" fallback name is used) to render pages.
 
-### Problem pages (known tech debt — read before extending)
+### Problem pages
 
-Each problem currently gets its own Thymeleaf template, CSS file, and JS file (e.g. `templates/arrays/bubble-sort.html` + `static/css/bubble-sort.css` + `static/js/bubble-sort.js`), wired to its own `@GetMapping` in `PageController`. A single template mixes problem description, starter code, hidden tests, Java source generation, and console formatting together. This is called out as the top refactoring priority in `readme.md`: the intended direction is data-driven problem definitions (e.g. `problem.yaml` + `statement.md` + `starter.java` + `tests.java` per problem) rendered by one generic controller/template, replacing the current one-page-per-problem duplication. Don't add more one-off problem pages/controllers/JS files without checking whether the user wants the generic version built first — ask rather than assuming.
+Arrays problems are already generic. Each is a `ProblemDefinition` class registered in `problem.ProblemRegistry`, rendered by one route (`/problems/{category}/{slug}`), one template (`problem.html`) and one script (`problem.js`). The hidden-test harness is built server-side by `buildTestSource`. The legacy exception is `collections/longest-unique-substring`, which still has its own template, CSS and JS, and builds its test source client-side. Don't add more one-off problem pages; migrate them onto the registry instead (ask first if unsure).
+
+### Users, discussions and attachments
+
+- **Schema:** owned by Flyway (`src/main/resources/db/migration/V*.sql`). Hibernate runs with `ddl-auto=validate`. Never edit a merged migration; add a new `V{n}__*.sql`.
+- **`user` package:** `AppUser` entity, upserted on each OAuth login by `AppUserLoginService`, which is plugged into `oauth2Login().userInfoEndpoint()`. The principal is `AppUserPrincipal`, an `OAuth2User` that carries `getUserId()`. `ProviderProfile` is the only place that knows GitHub attribute names.
+- **`discussion` package:** per-problem two-level threads.
+  - `thread_id` points at the root post; `reply_to_id` points at the post being quoted.
+  - Supports soft delete and fixed reactions (`Reaction` enum).
+  - `DiscussionService` holds all authorization and business rules. `DiscussionApiController` (`/api/...`) returns DTO records only.
+  - `MarkdownRenderer` is the XSS boundary: commonmark with HTML escaped, then an OWASP allowlist. Only `/attachments/{uuid}` images survive.
+- **`attachment` package:** screenshots stored as `bytea`.
+  - `ImageSanitizer` sniffs the format, limits dimensions and re-encodes every image.
+  - Uploads are unclaimed until a post embeds them. `OrphanAttachmentCleanup` purges unused ones after 24h.
+  - Gotcha: the claim is a bulk update that clears the persistence context, so build any response *before* calling it.
+- **`ratelimit.UserRateLimiter`:** in-memory Bucket4j limits per user and action.
+- **Security headers:** `security.SecurityHeaders` defines the shared CSP, used by both profiles. A new CDN script must be from cdnjs or jsDelivr, pinned, with an SRI hash. Otherwise vendor it under `static/vendor/`.
+- **`/api/**` in prod:** returns 401 instead of redirecting to login. Every state-changing `fetch` must send `csrfHeaders()` from `static/js/csrf.js`; the tokens come from the `fragments/csrf` meta fragment.
+
+### Tests
+
+- Controller tests use `@WebMvcTest`: `@Import(SecurityConfig.class)` for production rules, or `DevSecurityConfig` with profile `dev`.
+- Repository and service tests use `@DataJpaTest` + `@AutoConfigureTestDatabase(replace = NONE)` + `@Import(TestcontainersConfiguration.class)`, which runs a real PostgreSQL through Testcontainers, so Docker must be running.
 
 Problem list pages (`/problems`, `/problems/arrays`, `/problems/collections`, `/problems/algorithms`) are static category listings that link to individual problem pages; `fragments/navbar.html` is a shared Thymeleaf fragment included via `th:replace` across pages.
 
