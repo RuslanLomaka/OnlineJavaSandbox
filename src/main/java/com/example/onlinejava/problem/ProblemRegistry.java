@@ -6,6 +6,7 @@ import com.example.onlinejava.problem.arrays.TwoSumProblem;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.stereotype.Component;
 
 /**
@@ -45,6 +46,21 @@ public class ProblemRegistry {
    */
   public ProblemDefinition getProblem(String slug) {
     return problems.get(slug);
+  }
+
+  /**
+   * Finds a problem by slug, but only if it belongs to the given category
+   * (compared case-insensitively), matching the {@code /problems/{category}/{slug}}
+   * URL scheme.
+   *
+   * @param category category from the URL
+   * @param slug problem slug
+   * @return the problem, or empty if unknown or in another category
+   */
+  public Optional<Problem> findProblem(String category, String slug) {
+    return Optional.ofNullable(problems.get(slug))
+        .map(ProblemDefinition::getProblem)
+        .filter(problem -> problem.getCategory().equalsIgnoreCase(category));
   }
 
   /**

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>CSRF meta fragment</title>
+    <!--
+        CSRF token for fetch() calls. Scripts read these meta tags via
+        csrfHeaders() in /js/csrf.js. Absent in the dev profile, where CSRF
+        protection is disabled.
+    -->
+    <th:block th:fragment="meta">
+        <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+        <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
+    </th:block>
+</head>
+</html>

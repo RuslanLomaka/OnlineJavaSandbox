@@ -14,7 +14,9 @@ Online Java Sandbox lets users:
 - write Java code in the browser;
 - compile and run it inside disposable Docker containers;
 - solve structured Java problems;
-- see automatic test results.
+- see automatic test results;
+- discuss each problem with other users: threaded replies, Markdown with
+  copyable code blocks, emoji, reactions and screenshots.
 
 Current problem sections:
 
@@ -36,15 +38,20 @@ Current problems:
 - Spring Security
 - GitHub OAuth
 - Thymeleaf
-- PostgreSQL
+- PostgreSQL + Flyway migrations
 - Docker
 - Docker Compose
 - RabbitMQ
 - CodeMirror
 - Cloudflare Tunnel
 - Raspberry Pi
+- EasyMDE, highlight.js, DOMPurify, emoji-picker-element (discussion UI)
+- commonmark-java + OWASP Java HTML Sanitizer (safe Markdown rendering)
+- Bucket4j (rate limiting)
+- JUnit 5, Spring MVC slice tests, Testcontainers (PostgreSQL)
 - Checkstyle (Google Java Style)
 - SonarQube Cloud
+- CodeRabbit (AI pull-request review)
 
 ## How execution works
 
@@ -106,6 +113,45 @@ guarantee — see [Current limitations](#current-limitations).
 
 This is still an experimental project and not yet fully hardened for unrestricted public code execution.
 
+## Problem discussions
+
+Every registered problem has a discussion page at
+`/problems/{category}/{slug}/discussion`, linked from the problem page as
+"Discussion (N)". Only users signed in with GitHub can read or post.
+
+- **Users.** The first login creates an `app_user` row keyed by
+  `(provider, provider_user_id)`, and each later login refreshes the
+  name and avatar. `AppUserLoginService` hooks into Spring Security's
+  OAuth2 login. The principal (`AppUserPrincipal`) carries the database id,
+  which is used for ownership checks.
+- **Threads.** Threads are two levels deep: a top-level post plus a flat list of replies.
+  Replying to a reply keeps it in the same thread and shows a
+  "↪ replying to @user" quote.
+- **Content.** Posts are Markdown, with `java` code blocks (highlighted, with a
+  Copy button), tables, links, emoji and pasted or dropped screenshots.
+  Authors can edit or delete their own posts. Deletion is soft, so replies keep
+  their context. There are six fixed reactions (👍 ❤️ 🎉 😄 🤔 🚀).
+- **Storage.** Posts, reactions and screenshots live in PostgreSQL. The schema
+  is managed by Flyway (`src/main/resources/db/migration`), and Hibernate only
+  validates it.
+
+Security measures:
+
+- Markdown is rendered on the server with raw HTML escaped. The result then
+  passes through an OWASP allowlist sanitizer, and the browser sanitizes it
+  again with DOMPurify. Images may only point at this site's own
+  `/attachments/{uuid}` URLs, so there are no tracking pixels.
+- Screenshots are limited to 2 MB and 4096×4096 pixels. The format is detected
+  from the bytes, not the file name. Every image is **re-encoded**, which strips
+  EXIF/GPS metadata and anything hidden in the file. Images are served with
+  `nosniff` and a sandboxing CSP. Uploads that no post uses are deleted
+  after 24 hours.
+- Edit and delete rights are checked on the server. Every state change needs a
+  CSRF token. Posts, reactions and uploads are rate-limited per user
+  (Bucket4j).
+- Every page sends a strict Content-Security-Policy. Third-party scripts come
+  from pinned CDN versions with SRI hashes.
+
 ## Current architecture
 
 The project started as a fast prototype, and one part of the planned refactor is done: Arrays problems now go through a generic, data-driven path instead of one hand-written page per problem.
@@ -139,13 +185,13 @@ for the full flow and why.
 
 ### Database and users
 
-- [ ] create user entities;
-- [ ] store GitHub user data;
+- [x] create user entities;
+- [x] store GitHub user data;
 - [ ] save attempts;
 - [ ] track completed problems;
 - [ ] add user profiles;
 - [ ] add progress statistics;
-- [ ] add comments and discussions.
+- [x] add comments and discussions.
 
 ### Security
 
@@ -153,7 +199,7 @@ for the full flow and why.
 - [ ] restore working memory limits (the `--memory` flag is set, but not currently enforced on the host running the containers);
 - [ ] separate the runner from the web application;
 - [ ] reduce Docker socket exposure;
-- [ ] add abuse prevention;
+- [x] add abuse prevention for discussions (rate limits, sanitization);
 - [ ] add stronger isolation.
 
 ### Collaboration
@@ -239,8 +285,8 @@ Development mode is available for contributors who want to run and change the
 project locally without configuring GitHub OAuth credentials or a production
 deployment. It still needs a local RabbitMQ container and a small `.env` file
 now, since code execution always goes through RabbitMQ regardless of profile
-(see [How execution works](#how-execution-works)) — PostgreSQL is the only
-piece dev mode skips entirely.
+(see [How execution works](#how-execution-works)), plus a local PostgreSQL
+for users and discussions.
 
 ### Requirements
 
@@ -298,6 +344,18 @@ The first run downloads the `rabbitmq` image automatically; no separate
 check the management UI at `http://localhost:15672` (log in with the
 credentials from your `.env`).
 
+Start a local PostgreSQL for users and discussions. Flyway creates the
+tables on the first start:
+
+```bash
+docker run -d --name online-java-dev-db -p 127.0.0.1:5432:5432 \
+  -e POSTGRES_DB=online_java -e POSTGRES_HOST_AUTH_METHOD=trust postgres:17
+```
+
+Dev mode connects to `jdbc:postgresql://127.0.0.1:5432/online_java` as user
+`postgres` by default. To use a different database, set `DEV_DATASOURCE_URL`,
+`POSTGRES_USER` and `POSTGRES_PASSWORD` in `.env`.
+
 ### Run with IntelliJ IDEA
 
 1. Open the project in IntelliJ IDEA.
@@ -309,8 +367,10 @@ credentials from your `.env`).
 
 Development mode:
 
-- bypasses GitHub login;
-- does not connect to PostgreSQL;
+- bypasses GitHub login: every request is signed in as a fixed `local-dev`
+  user, so posting and uploads work locally (the app refuses to start this
+  way unless it is bound to `127.0.0.1`);
+- connects to the local PostgreSQL started above;
 - disables template and static-resource caching;
 - binds the web server to `127.0.0.1`;
 - connects to the RabbitMQ container started above (`127.0.0.1:5672`) to run
@@ -381,6 +441,15 @@ Every pull request against `master` runs Checkstyle, the full test suite against
 
 CI does not run a RabbitMQ service — verified that the test suite still passes without one reachable, since Spring AMQP retries connecting in the background rather than failing application startup. The only cost is a noisy (harmless) connection-refused stack trace in the CI test logs.
 
+## Code review with CodeRabbit
+
+Pull requests are also reviewed by [CodeRabbit](https://coderabbit.ai), an AI
+reviewer that is free for public repositories. It posts a summary and line
+comments on each PR, and you can talk to it by mentioning `@coderabbitai` in a
+PR comment. `.coderabbit.yaml` sets it up and gives it security-focused
+instructions for the security, discussion and attachment code. To enable it,
+install the CodeRabbit GitHub App on the repository.
+
 ## Manual deployment
 
 Only needed if the automatic deployment above isn't available:
@@ -395,11 +464,11 @@ docker compose up -d --build
 
 - no saved attempts;
 - no scores;
-- no comments;
 - no user profiles;
 - no working memory limit on the current host (the container flag is set but not enforced there);
 - problem logic is still mixed with HTML and JavaScript for the Collections/Algorithms problems (Arrays problems are already migrated to the generic architecture, see [Current architecture](#current-architecture));
-- no database or user entities yet (still file/code-defined problems, nothing persisted);
+- problems are still defined in code; only users and discussions are stored in the database;
+- discussions don't update live; new messages appear after a page reload;
 - code execution now has a new dependency: if RabbitMQ is down or unreachable, submissions fail gracefully (a clear error message, not a crash), but the app cannot run any code at all until it's back — a single point of failure that didn't exist when execution was a direct method call.
 
 ## Author
