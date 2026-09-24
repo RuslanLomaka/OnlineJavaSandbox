@@ -52,6 +52,8 @@ public class DevSecurityConfig {
         )
         .csrf(AbstractHttpConfigurer::disable);
 
+    SecurityHeaders.apply(http);
+
     appUserService.ifAvailable(service -> http.addFilterBefore(
         new DevUserAuthenticationFilter(service, serverAddress),
         AnonymousAuthenticationFilter.class));

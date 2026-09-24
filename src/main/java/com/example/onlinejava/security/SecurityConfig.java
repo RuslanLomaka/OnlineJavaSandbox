@@ -68,6 +68,8 @@ public class SecurityConfig {
 
         .csrf(csrf -> csrf.ignoringRequestMatchers("/sandbox/run"));
 
+    SecurityHeaders.apply(http);
+
     return http.build();
   }
 }

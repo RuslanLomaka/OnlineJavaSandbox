@@ -1,9 +1,12 @@
 package com.example.onlinejava.security;
 
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -89,5 +92,19 @@ class SecurityConfigTest {
             .contentType(MediaType.TEXT_PLAIN)
             .content("x"))
         .andExpect(status().isOk());
+  }
+
+  @Test
+  void pagesSendContentSecurityPolicy() throws Exception {
+    mockMvc.perform(get("/sandbox").with(oauth2Login()))
+        .andExpect(header().string("Content-Security-Policy",
+            allOf(
+                containsString(
+                    "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net"),
+                containsString("object-src 'none'"),
+                containsString("frame-ancestors 'none'"),
+                containsString("connect-src 'self'"))))
+        .andExpect(header().string("X-Frame-Options", "DENY"))
+        .andExpect(header().string("Referrer-Policy", "strict-origin-when-cross-origin"));
   }
 }
