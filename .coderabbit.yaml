@@ -1,0 +1,61 @@
+# CodeRabbit AI code review configuration.
+# Reference: https://docs.coderabbit.ai/reference/configuration
+# Takes effect once the CodeRabbit GitHub App is installed on this repository.
+language: en-US
+
+reviews:
+  # "assertive" produces more detailed feedback than the default "chill" profile.
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - master
+
+  path_filters:
+    - "!**/target/**"
+    - "!.idea/**"
+    - "!mvnw"
+    - "!mvnw.cmd"
+
+  path_instructions:
+    - path: "src/main/java/**/*.java"
+      instructions: >-
+        Code must follow Google Java Style (enforced by Checkstyle with google_checks.xml):
+        2-space indent, Javadoc on every public class and method, correct import grouping.
+        Controllers must return DTOs, never JPA entities.
+    - path: "src/main/java/**/security/**"
+      instructions: >-
+        Security-critical. Check authentication and authorization rules, CSRF handling,
+        Content-Security-Policy, and that the dev-only configuration can never activate in production.
+    - path: "src/main/java/**/discussion/**"
+      instructions: >-
+        User-generated content. Check for XSS (all HTML must pass through the sanitizer),
+        IDOR (edit/delete must verify the author server-side), input length limits,
+        rate limiting, and N+1 query patterns.
+    - path: "src/main/java/**/attachment/**"
+      instructions: >-
+        Handles user-uploaded images. Check content sniffing, size and dimension limits,
+        re-encoding (metadata stripping), and safe response headers when serving.
+    - path: "src/main/java/**/sandbox/**"
+      instructions: >-
+        Runs untrusted code in Docker. Any weakening of container isolation flags is a critical issue.
+    - path: "src/main/resources/static/js/**"
+      instructions: >-
+        Never insert user-controlled strings with innerHTML unless they were sanitized
+        (DOMPurify). All state-changing fetch calls must send the CSRF header.
+    - path: "src/main/resources/db/migration/**"
+      instructions: >-
+        Flyway migrations are immutable once merged; flag edits to existing versioned files.
+    - path: "src/test/**"
+      instructions: >-
+        Tests should be focused and deterministic; prefer AssertJ assertions.
+
+chat:
+  auto_reply: true
