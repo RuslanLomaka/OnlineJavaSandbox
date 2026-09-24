@@ -22,7 +22,8 @@ import org.junit.jupiter.params.provider.MethodSource;
  *
  * <p>This proves each harness actually accepts right answers and rejects wrong
  * ones. Reference solutions live in {@code src/test/resources/solutions/}
- * ({@code {slug}.java} and {@code {slug}.wrong.java}); adding a problem without
+ * ({@code {slug}.txt} and {@code {slug}.wrong.txt}; plain text, since they are
+ * method bodies rather than compilable Java files); adding a problem without
  * them fails this test on purpose. Each harness runs in a separate JVM because
  * harnesses call {@code System.exit(1)} on failure.
  */
@@ -67,7 +68,7 @@ class HarnessVerificationTest {
       final Path workDir
   ) throws IOException, InterruptedException {
     final String slug = definition.getProblem().getSlug();
-    final String solution = readSolution(slug + variant + ".java");
+    final String solution = readSolution(slug + variant + ".txt");
     final Path source = workDir.resolve("Main.java");
     Files.writeString(source, definition.buildTestSource(solution), StandardCharsets.UTF_8);
 

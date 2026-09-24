@@ -56,7 +56,7 @@ Two mutually exclusive `SecurityFilterChain` beans in `com.example.onlinejava.se
 
 ### Problem pages
 
-Every problem is a `ProblemDefinition` class (in `problem.datastructures` or `problem.algorithms`) tagged with a `problem.Topic` and registered in `problem.ProblemRegistry`. It's rendered by one route (`/problems/{topicSlug}/{slug}`), one template (`problem.html`) and one script (`problem.js`); old category URLs get a 301 via `Redirects.permanent`. The hidden-test harness is built server-side by `buildTestSource`. Every new problem needs reference solutions at `src/test/resources/solutions/{slug}.java` and `{slug}.wrong.java`, or `HarnessVerificationTest` fails. Never add one-off problem pages.
+Every problem is a `ProblemDefinition` class (in `problem.datastructures` or `problem.algorithms`) tagged with a `problem.Topic` and registered in `problem.ProblemRegistry`. It's rendered by one route (`/problems/{topicSlug}/{slug}`), one template (`problem.html`) and one script (`problem.js`); old category URLs get a 301 via `Redirects.permanent`. The hidden-test harness is built server-side by `buildTestSource`. Every new problem needs reference solutions at `src/test/resources/solutions/{slug}.txt` and `{slug}.wrong.txt` (method bodies), or `HarnessVerificationTest` fails. Never add one-off problem pages.
 
 `Topic` (with its `Section`: Data Structures / Algorithms) drives the navbar menus (`problem.NavigationModelAdvice`), the `/problems` overview and the `/problems/{topicSlug}` topic pages. Topic slugs are public URLs.
 
