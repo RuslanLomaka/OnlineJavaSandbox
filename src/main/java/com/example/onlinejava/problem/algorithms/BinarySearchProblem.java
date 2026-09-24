@@ -1,9 +1,9 @@
-package com.example.onlinejava.problem.arrays;
+package com.example.onlinejava.problem.algorithms;
 
 import com.example.onlinejava.problem.Difficulty;
 import com.example.onlinejava.problem.Problem;
 import com.example.onlinejava.problem.ProblemDefinition;
-import com.example.onlinejava.problem.ProblemType;
+import com.example.onlinejava.problem.Topic;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -21,9 +21,8 @@ public class BinarySearchProblem implements ProblemDefinition {
    */
   @Override
   public Problem getProblem() {
-    return new Problem.Builder("Binary Search", ProblemType.SEARCHING, Difficulty.EASY)
+    return new Problem.Builder("Binary Search", Topic.SEARCHING, Difficulty.EASY)
         .slug("binary-search")
-        .category("Arrays")
         .description("Given a sorted array of integers and a target value, return the index "
             + "of the target. Return -1 if the target is not present.")
         .methodSignature("public static int binarySearch(int[] numbers, int target)")

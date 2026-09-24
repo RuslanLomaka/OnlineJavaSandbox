@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Problems of one topic as links with a difficulty badge, or "Coming soon". -->
+<th:block th:fragment="problemList(problems)">
+    <div class="problem-list" th:unless="${#lists.isEmpty(problems)}">
+        <a th:each="problem : ${problems}"
+           class="problem-link"
+           th:href="@{${problem.path}}">
+            <span th:text="${problem.title}">Problem</span>
+            <span class="problem-difficulty"
+                  th:classappend="'difficulty-' + ${#strings.toLowerCase(problem.difficulty)}"
+                  th:text="${problem.difficulty}">EASY</span>
+        </a>
+    </div>
+    <p class="empty-section" th:if="${#lists.isEmpty(problems)}">Coming soon</p>
+</th:block>
+
+</body>
+</html>

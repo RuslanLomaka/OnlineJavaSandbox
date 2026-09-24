@@ -1,9 +1,9 @@
-package com.example.onlinejava.problem.arrays;
+package com.example.onlinejava.problem.datastructures;
 
 import com.example.onlinejava.problem.Difficulty;
 import com.example.onlinejava.problem.Problem;
 import com.example.onlinejava.problem.ProblemDefinition;
-import com.example.onlinejava.problem.ProblemType;
+import com.example.onlinejava.problem.Topic;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -22,9 +22,8 @@ public class TwoSumProblem implements ProblemDefinition {
    */
   @Override
   public Problem getProblem() {
-    return new Problem.Builder("Two Sum", ProblemType.HASHING, Difficulty.EASY)
+    return new Problem.Builder("Two Sum", Topic.HASHING, Difficulty.EASY)
         .slug("two-sum")
-        .category("Arrays")
         .description("Given an array of integers and a target value, return the indices "
             + "of two numbers whose sum equals the target.")
         .methodSignature("public static int[] twoSum(int[] numbers, int target)")

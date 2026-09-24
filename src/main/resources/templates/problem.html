@@ -43,8 +43,8 @@
             <!-- Displays problem metadata. -->
             <div class="problem-meta">
                 <span th:text="${problem.difficulty}"></span>
-                <span th:text="${problem.category}"></span>
-                <span th:text="${problem.type}"></span>
+                <a th:href="@{${problem.topic.path()}}"
+                   th:text="${problem.topic.section().title()} + ' › ' + ${problem.topic.title()}">Topic</a>
             </div>
 
             <!-- Displays the problem title. -->
@@ -53,7 +53,7 @@
             <!-- Link to the problem's discussion; problem.js adds the post count. -->
             <a id="discussionLink"
                class="discussion-link"
-               th:href="@{/problems/{category}/{slug}/discussion(category=${#strings.toLowerCase(problem.category)},slug=${problem.slug})}">
+               th:href="@{${problem.path} + '/discussion'}">
                 💬 Discussion
             </a>
 

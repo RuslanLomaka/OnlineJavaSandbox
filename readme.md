@@ -18,18 +18,17 @@ Online Java Sandbox lets users:
 - discuss each problem with other users: threaded replies, Markdown with
   copyable code blocks, emoji, reactions and screenshots.
 
-Current problem sections:
-
-- Arrays
-- Collections
-- Algorithms
+Problems are grouped into two navbar menus, **Data Structures** (Arrays,
+Strings, Hash Maps & Sets, Stacks & Queues, Linked Lists, Trees, Graphs, Heaps)
+and **Algorithms** (Sorting, Searching, Two Pointers, Sliding Window,
+Recursion & Backtracking, Dynamic Programming, Greedy).
 
 Current problems:
 
-- Bubble Sort (Arrays)
-- Two Sum (Arrays)
-- Binary Search (Arrays)
-- Longest Substring Without Repeating Characters (Collections)
+- Bubble Sort (Algorithms › Sorting)
+- Binary Search (Algorithms › Searching)
+- Longest Substring Without Repeating Characters (Algorithms › Sliding Window)
+- Two Sum (Data Structures › Hash Maps & Sets)
 
 ## Tech stack
 
@@ -154,16 +153,12 @@ Security measures:
 
 ## Current architecture
 
-The project started as a fast prototype, and one part of the planned refactor is done: Arrays problems now go through a generic, data-driven path instead of one hand-written page per problem.
+Every problem goes through one generic, data-driven path:
 
-- Each Arrays problem is a small Java class (e.g. `BubbleSortProblem`) implementing `ProblemDefinition`, registered in `ProblemRegistry`.
-- One controller route (`/problems/{category}/{slug}`) and one Thymeleaf template (`problem.html`) render every Arrays problem.
-- One shared script (`problem.js`) drives the editor and submission flow for all of them.
-- The full test harness (imports, student code, hidden tests) is assembled **server-side** (`ProblemDefinition.buildTestSource`) and only the student's method body is ever sent to the browser — hidden tests are no longer visible via view-source or the Network tab for these problems.
-
-This has **not** happened yet for the Collections/Algorithms categories: `Longest Substring Without Repeating Characters` is still its own hand-written page, CSS file, and JS file, and it still assembles the complete test source (including hidden tests) client-side and posts it to the generic `/sandbox/run` endpoint — so the original "hidden tests aren't actually hidden" problem still applies to that one problem specifically.
-
-Migrating the remaining problems to the same pattern used for Arrays is the next concrete step, not a redesign — the generic controller, template, and script already exist and just need to be reused.
+- Each problem is a small Java class (e.g. `BubbleSortProblem`) implementing `ProblemDefinition`, tagged with a `Topic`, and registered in `ProblemRegistry`.
+- Problem URLs are `/problems/{topic}/{slug}` (e.g. `/problems/sorting/bubble-sort`), rendered by one template (`problem.html`) and one script (`problem.js`). Older category URLs redirect permanently.
+- The full test harness (imports, student code, hidden tests) is assembled **server-side** (`ProblemDefinition.buildTestSource`); only the student's method body is ever sent to the browser, so hidden tests stay hidden.
+- `HarnessVerificationTest` compiles and runs every harness with a known-correct and a known-wrong reference solution (`src/test/resources/solutions/`), so a broken harness fails the build.
 
 Separately, code execution itself now goes through RabbitMQ as a real request/reply
 hop instead of being called directly — see [How execution works](#how-execution-works)
@@ -178,7 +173,8 @@ for the full flow and why.
 - [x] create a generic problem page;
 - [x] add output-size limits;
 - [x] add execution queue (concurrency limit);
-- [ ] migrate the Collections/Algorithms problems onto the generic problem page;
+- [x] migrate every problem onto the generic problem page;
+- [x] group problems into Data Structures / Algorithms topics;
 - [ ] improve error handling;
 - [ ] improve mobile layout;
 - [ ] add more Java problems.
@@ -466,7 +462,6 @@ docker compose up -d --build
 - no scores;
 - no user profiles;
 - no working memory limit on the current host (the container flag is set but not enforced there);
-- problem logic is still mixed with HTML and JavaScript for the Collections/Algorithms problems (Arrays problems are already migrated to the generic architecture, see [Current architecture](#current-architecture));
 - problems are still defined in code; only users and discussions are stored in the database;
 - discussions don't update live; new messages appear after a page reload;
 - code execution now has a new dependency: if RabbitMQ is down or unreachable, submissions fail gracefully (a clear error message, not a crash), but the app cannot run any code at all until it's back — a single point of failure that didn't exist when execution was a direct method call.

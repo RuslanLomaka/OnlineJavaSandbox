@@ -1,8 +1,11 @@
 package com.example.onlinejava.problem;
 
-import com.example.onlinejava.problem.arrays.BinarySearchProblem;
-import com.example.onlinejava.problem.arrays.BubbleSortProblem;
-import com.example.onlinejava.problem.arrays.TwoSumProblem;
+import com.example.onlinejava.problem.algorithms.BinarySearchProblem;
+import com.example.onlinejava.problem.algorithms.BubbleSortProblem;
+import com.example.onlinejava.problem.algorithms.LongestUniqueSubstringProblem;
+import com.example.onlinejava.problem.datastructures.TwoSumProblem;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +19,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProblemRegistry {
 
+  /**
+   * Order problems are listed in within a topic: easiest first, then by title.
+   */
+  public static final Comparator<Problem> DISPLAY_ORDER = Comparator
+      .comparing(Problem::getDifficulty)
+      .thenComparing(Problem::getTitle, String.CASE_INSENSITIVE_ORDER);
+
   private final Map<String, ProblemDefinition> problems = new HashMap<>();
 
   /**
@@ -23,22 +33,26 @@ public class ProblemRegistry {
    */
   public ProblemRegistry() {
     register(new BubbleSortProblem());
-    register(new TwoSumProblem());
     register(new BinarySearchProblem());
+    register(new LongestUniqueSubstringProblem());
+    register(new TwoSumProblem());
   }
 
   /**
    * Adds a problem definition to the registry.
    *
    * @param problemDefinition the problem definition to register
+   * @throws IllegalStateException if the slug is already registered
    */
   public void register(ProblemDefinition problemDefinition) {
     Problem problem = problemDefinition.getProblem();
-    problems.put(problem.getSlug(), problemDefinition);
+    if (problems.putIfAbsent(problem.getSlug(), problemDefinition) != null) {
+      throw new IllegalStateException("Duplicate problem slug: " + problem.getSlug());
+    }
   }
 
   /**
-   * Finds a problem using its slug.
+   * Finds a problem definition using its slug.
    *
    * @param slug the problem's unique identifier
    * @return the matching problem definition, or {@code null} if none is
@@ -49,18 +63,31 @@ public class ProblemRegistry {
   }
 
   /**
-   * Finds a problem by slug, but only if it belongs to the given category
-   * (compared case-insensitively), matching the {@code /problems/{category}/{slug}}
-   * URL scheme.
+   * Finds a problem's metadata using its slug.
    *
-   * @param category category from the URL
-   * @param slug problem slug
-   * @return the problem, or empty if unknown or in another category
+   * @param slug the problem's unique identifier
+   * @return the problem, or empty if none is registered under that slug
    */
-  public Optional<Problem> findProblem(String category, String slug) {
-    return Optional.ofNullable(problems.get(slug))
-        .map(ProblemDefinition::getProblem)
-        .filter(problem -> problem.getCategory().equalsIgnoreCase(category));
+  public Optional<Problem> findBySlug(String slug) {
+    return Optional.ofNullable(problems.get(slug)).map(ProblemDefinition::getProblem);
+  }
+
+  /**
+   * Returns every topic in menu order with its problems in
+   * {@link #DISPLAY_ORDER}. Topics without problems map to an empty list.
+   *
+   * @return problems grouped by topic
+   */
+  public Map<Topic, List<Problem>> problemsByTopic() {
+    final Map<Topic, List<Problem>> byTopic = new EnumMap<>(Topic.class);
+    for (final Topic topic : Topic.values()) {
+      byTopic.put(topic, problems.values().stream()
+          .map(ProblemDefinition::getProblem)
+          .filter(problem -> problem.getTopic() == topic)
+          .sorted(DISPLAY_ORDER)
+          .toList());
+    }
+    return byTopic;
   }
 
   /**

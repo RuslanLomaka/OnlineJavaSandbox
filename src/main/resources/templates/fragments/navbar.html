@@ -4,8 +4,15 @@
 
 <body>
 
+<!--
+    Shared navbar. The "Data Structures" and "Algorithms" menus come from
+    navSections (NavigationModelAdvice). They are <details> elements, so they
+    open and close without JavaScript; /js/nav.js only adds "close on outside
+    click / Escape".
+-->
 <nav th:fragment="navbar"
-     class="navbar">
+     class="navbar"
+     aria-label="Main">
 
     <div class="navbar-left">
 
@@ -18,20 +25,26 @@
             Sandbox
         </a>
 
+        <details class="nav-menu"
+                 th:each="section : ${navSections}">
+
+            <summary th:text="${section.title}">Data Structures</summary>
+
+            <ul class="nav-menu-list">
+                <li th:each="topic : ${section.topics}">
+                    <a th:href="@{${topic.path}}"
+                       th:classappend="${topic.problemCount == 0} ? 'nav-topic-empty'">
+                        <span th:text="${topic.title}">Topic</span>
+                        <span class="nav-count"
+                              th:text="${topic.problemCount == 0} ? 'soon' : ${topic.problemCount}">1</span>
+                    </a>
+                </li>
+            </ul>
+
+        </details>
+
         <a th:href="@{/problems}">
-            Problems
-        </a>
-
-        <a th:href="@{/problems/arrays}">
-            Arrays
-        </a>
-
-        <a th:href="@{/problems/collections}">
-            Collections
-        </a>
-
-        <a th:href="@{/problems/algorithms}">
-            Algorithms
+            All problems
         </a>
 
     </div>
@@ -57,6 +70,8 @@
         </form>
 
     </div>
+
+    <script th:src="@{/js/nav.js}" defer></script>
 
 </nav>
 
