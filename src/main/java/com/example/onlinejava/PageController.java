@@ -5,8 +5,6 @@ import com.example.onlinejava.problem.ProblemDefinition;
 import com.example.onlinejava.problem.ProblemRegistry;
 import java.util.List;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,27 +32,13 @@ public class PageController {
   }
 
   /**
-   * Displays the sandbox page.
+   * Displays the sandbox page. The navbar's {@code username} comes from
+   * {@link com.example.onlinejava.user.CurrentUserModelAdvice}.
    *
-   * @param user authenticated OAuth2 user, if available
-   * @param model model used to pass data to the view
    * @return the sandbox page name
    */
   @GetMapping("/sandbox")
-  public String sandbox(
-      @AuthenticationPrincipal final OAuth2User user,
-      final Model model
-  ) {
-    final String username;
-
-    if (user == null) {
-      username = "Local developer";
-    } else {
-      username = user.getAttribute("login");
-    }
-
-    model.addAttribute("username", username);
-
+  public String sandbox() {
     return "sandbox";
   }
 

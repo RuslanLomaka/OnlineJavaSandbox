@@ -10,6 +10,7 @@ import com.example.onlinejava.PageController;
 import com.example.onlinejava.problem.ProblemRegistry;
 import com.example.onlinejava.sandbox.SandboxController;
 import com.example.onlinejava.sandbox.SandboxExecutionGateway;
+import com.example.onlinejava.user.AppUserLoginService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -38,6 +39,9 @@ class SecurityConfigTest {
 
   @MockitoBean
   private SandboxExecutionGateway gateway;
+
+  @MockitoBean
+  private AppUserLoginService appUserLoginService;
 
   @Test
   void anonymousUserIsRedirectedToLogin() throws Exception {

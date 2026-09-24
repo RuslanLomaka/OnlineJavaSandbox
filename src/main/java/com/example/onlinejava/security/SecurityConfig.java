@@ -1,5 +1,6 @@
 package com.example.onlinejava.security;
 
+import com.example.onlinejava.user.AppUserLoginService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -19,11 +20,19 @@ public class SecurityConfig {
    * routes, requires OAuth2 authentication for everything else, and
    * exempts the sandbox execution endpoint from CSRF protection.
    *
+   * <p>Every successful login goes through {@link AppUserLoginService},
+   * which records the user in the database and makes the principal an
+   * {@link com.example.onlinejava.user.AppUserPrincipal}.
+   *
    * @param http the security configuration builder
+   * @param appUserLoginService records logins and builds the principal
    * @return the configured filter chain
    */
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+  public SecurityFilterChain securityFilterChain(
+      HttpSecurity http,
+      AppUserLoginService appUserLoginService
+  ) {
 
     http
         .authorizeHttpRequests(authorize -> authorize
@@ -33,7 +42,9 @@ public class SecurityConfig {
             .anyRequest()
             .authenticated())
 
-        .oauth2Login(oauth -> oauth.defaultSuccessUrl("/sandbox", true))
+        .oauth2Login(oauth -> oauth
+            .userInfoEndpoint(userInfo -> userInfo.userService(appUserLoginService))
+            .defaultSuccessUrl("/sandbox", true))
 
         .csrf(csrf -> csrf.ignoringRequestMatchers("/sandbox/run"));
 

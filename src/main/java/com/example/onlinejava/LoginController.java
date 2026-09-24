@@ -1,5 +1,6 @@
 package com.example.onlinejava;
 
+import com.example.onlinejava.user.CurrentUserModelAdvice;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,6 @@ public class LoginController {
   public String user(
       @AuthenticationPrincipal OAuth2User user
   ) {
-    return "Logged in as: " + user.getAttribute("login");
+    return "Logged in as: " + CurrentUserModelAdvice.displayName(user);
   }
 }
