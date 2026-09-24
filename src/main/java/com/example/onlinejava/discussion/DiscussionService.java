@@ -1,5 +1,6 @@
 package com.example.onlinejava.discussion;
 
+import com.example.onlinejava.attachment.AttachmentService;
 import com.example.onlinejava.discussion.PostReactionRepository.ReactionCount;
 import com.example.onlinejava.discussion.dto.AuthorView;
 import com.example.onlinejava.discussion.dto.CreatePostRequest;
@@ -53,6 +54,8 @@ public class DiscussionService {
 
   private final UserRateLimiter rateLimiter;
 
+  private final AttachmentService attachmentService;
+
   private final Clock clock;
 
   /**
@@ -64,6 +67,7 @@ public class DiscussionService {
    * @param problemRegistry used to reject unknown problem slugs
    * @param markdownRenderer renders post bodies
    * @param rateLimiter per-user rate limits
+   * @param attachmentService links embedded screenshots to posts
    * @param clock source of the current time
    */
   public DiscussionService(
@@ -73,6 +77,7 @@ public class DiscussionService {
       final ProblemRegistry problemRegistry,
       final MarkdownRenderer markdownRenderer,
       final UserRateLimiter rateLimiter,
+      final AttachmentService attachmentService,
       final Clock clock
   ) {
     this.posts = posts;
@@ -81,6 +86,7 @@ public class DiscussionService {
     this.problemRegistry = problemRegistry;
     this.markdownRenderer = markdownRenderer;
     this.rateLimiter = rateLimiter;
+    this.attachmentService = attachmentService;
     this.clock = clock;
   }
 
@@ -162,6 +168,7 @@ public class DiscussionService {
     final AppUser author = users.getReferenceById(authorId);
     final DiscussionPost post = posts.save(
         new DiscussionPost(slug, author, replyTo, request.body(), clock.instant()));
+    claimAttachments(post, authorId);
     return toView(post, authorId, Map.of());
   }
 
@@ -176,6 +183,7 @@ public class DiscussionService {
   public PostView editPost(final long postId, final long userId, final String body) {
     final DiscussionPost post = findOwnLivePost(postId, userId);
     post.edit(body, clock.instant());
+    claimAttachments(post, userId);
     return toView(post, userId, reactionViews(List.of(postId), userId));
   }
 
@@ -187,6 +195,7 @@ public class DiscussionService {
    */
   public void deletePost(final long postId, final long userId) {
     findOwnLivePost(postId, userId).softDelete(clock.instant());
+    attachmentService.deleteForPost(postId);
   }
 
   /**
@@ -229,6 +238,11 @@ public class DiscussionService {
     reactions.deleteById(new PostReactionId(postId, userId, reaction));
     reactions.flush();
     return reactionViews(List.of(postId), userId).getOrDefault(postId, List.of());
+  }
+
+  private void claimAttachments(final DiscussionPost post, final long authorId) {
+    attachmentService.claim(
+        markdownRenderer.referencedAttachments(post.getBodyMarkdown()), authorId, post.getId());
   }
 
   private void requireProblem(final String slug) {

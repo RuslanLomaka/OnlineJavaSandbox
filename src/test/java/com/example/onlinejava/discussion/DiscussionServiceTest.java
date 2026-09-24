@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.onlinejava.ClockConfig;
 import com.example.onlinejava.TestcontainersConfiguration;
+import com.example.onlinejava.attachment.AttachmentRepository;
+import com.example.onlinejava.attachment.AttachmentService;
+import com.example.onlinejava.attachment.ImageSanitizer;
 import com.example.onlinejava.discussion.dto.CreatePostRequest;
 import com.example.onlinejava.discussion.dto.PostView;
 import com.example.onlinejava.discussion.dto.ReactionView;
@@ -13,8 +16,13 @@ import com.example.onlinejava.problem.ProblemRegistry;
 import com.example.onlinejava.ratelimit.UserRateLimiter;
 import com.example.onlinejava.user.AppUser;
 import com.example.onlinejava.user.AppUserRepository;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
+import javax.imageio.ImageIO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +38,8 @@ import org.springframework.web.server.ResponseStatusException;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import({TestcontainersConfiguration.class, DiscussionService.class, MarkdownRenderer.class,
-    ProblemRegistry.class, UserRateLimiter.class, ClockConfig.class})
+    ProblemRegistry.class, UserRateLimiter.class, ClockConfig.class, AttachmentService.class,
+    ImageSanitizer.class})
 class DiscussionServiceTest {
 
   private static final String SLUG = "bubble-sort";
@@ -40,6 +49,12 @@ class DiscussionServiceTest {
 
   @Autowired
   private AppUserRepository users;
+
+  @Autowired
+  private AttachmentService attachmentService;
+
+  @Autowired
+  private AttachmentRepository attachments;
 
   private long alice;
 
@@ -215,6 +230,44 @@ class DiscussionServiceTest {
     service.deletePost(gone.id(), bob);
 
     assertThat(service.countPosts(SLUG)).isEqualTo(2);
+  }
+
+  @Test
+  void savingPostClaimsEmbeddedScreenshots() throws IOException {
+    final UUID shot = attachmentService.upload(alice, tinyPng()).id();
+
+    final PostView post = service.createPost(SLUG, alice,
+        new CreatePostRequest("look ![s](/attachments/" + shot + ")", null));
+
+    assertThat(attachments.findById(shot).orElseThrow().getPostId()).isEqualTo(post.id());
+    assertThat(post.bodyHtml()).contains("<img src=\"/attachments/" + shot + "\"");
+  }
+
+  @Test
+  void editingPostClaimsNewlyEmbeddedScreenshots() throws IOException {
+    final PostView post = service.createPost(SLUG, alice, new CreatePostRequest("text", null));
+    final UUID shot = attachmentService.upload(alice, tinyPng()).id();
+
+    service.editPost(post.id(), alice, "now ![s](/attachments/" + shot + ")");
+
+    assertThat(attachments.findById(shot).orElseThrow().getPostId()).isEqualTo(post.id());
+  }
+
+  @Test
+  void deletingPostDeletesItsScreenshots() throws IOException {
+    final UUID shot = attachmentService.upload(alice, tinyPng()).id();
+    final PostView post = service.createPost(SLUG, alice,
+        new CreatePostRequest("![s](/attachments/" + shot + ")", null));
+
+    service.deletePost(post.id(), alice);
+
+    assertThat(attachments.existsById(shot)).isFalse();
+  }
+
+  private static byte[] tinyPng() throws IOException {
+    final ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ImageIO.write(new BufferedImage(2, 2, BufferedImage.TYPE_INT_RGB), "png", out);
+    return out.toByteArray();
   }
 
   private static void assertStatus(final Runnable action, final HttpStatus status) {
