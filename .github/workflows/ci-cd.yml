@@ -126,4 +126,18 @@ jobs:
             docker image prune -f
 
             docker compose ps
+
+            # "Container started" is not "site works": wait until the app
+            # actually answers on port 8080, otherwise fail the deploy.
+            for attempt in $(seq 1 30); do
+              code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ || true)
+              if [ "$code" -ge 200 ] && [ "$code" -lt 500 ]; then
+                echo "App is up (HTTP $code)"
+                exit 0
+              fi
+              sleep 5
+            done
+            echo "App did not respond on port 8080 within 150s."
+            echo "Check it on the Pi with: docker compose logs --tail=100 app"
+            exit 1
           '
