@@ -4,6 +4,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>Problems | Online Java</title>
 
@@ -17,54 +18,34 @@
 
 <main class="container">
 
-    <h1 class="page-title">
-        Java Problems
-    </h1>
+    <h1 class="page-title">Java Problems</h1>
 
     <p class="page-description">
-        Choose a section and practise Java by solving
-        small programming problems.
+        Practise Java by topic. Problems are grouped by the data structure they
+        use or the algorithm they teach, easiest first.
     </p>
 
-    <div class="section-grid">
+    <!-- One block per section: Data Structures, then Algorithms. -->
+    <section class="problem-section"
+             th:each="section : ${sections}"
+             th:attr="aria-label=${section.title}">
 
-        <a class="section-card"
-           th:href="@{/problems/arrays}">
+        <h2 class="section-title" th:text="${section.title}">Data Structures</h2>
 
-            <h2>Arrays</h2>
+        <div class="section-grid">
+            <article class="section-card"
+                     th:each="view : ${section.topics}"
+                     th:classappend="${#lists.isEmpty(view.problems)} ? 'section-card-empty'">
+                <h3>
+                    <a th:href="@{${view.topic.path()}}"
+                       th:text="${view.topic.title()}">Topic</a>
+                </h3>
+                <p th:text="${view.topic.description()}">Description</p>
+                <th:block th:replace="~{fragments/problem-list :: problemList(${view.problems})}"></th:block>
+            </article>
+        </div>
 
-            <p>
-                Sorting, searching and manipulating
-                arrays of values.
-            </p>
-
-        </a>
-
-        <a class="section-card"
-           th:href="@{/problems/collections}">
-
-            <h2>Collections</h2>
-
-            <p>
-                Lists, sets, maps, queues and other
-                Java collection types.
-            </p>
-
-        </a>
-
-        <a class="section-card"
-           th:href="@{/problems/algorithms}">
-
-            <h2>Algorithms</h2>
-
-            <p>
-                Two pointers, sliding windows,
-                recursion and general algorithms.
-            </p>
-
-        </a>
-
-    </div>
+    </section>
 
 </main>
 

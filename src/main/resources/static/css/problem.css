@@ -51,8 +51,9 @@
     margin-bottom: 14px;
 }
 
-/* Individual metadata badge. */
-.problem-meta span {
+/* Individual metadata badge (difficulty, and the topic link). */
+.problem-meta span,
+.problem-meta a {
     padding: 5px 10px;
     border-radius: 6px;
     background: #2c2c2c;
@@ -60,6 +61,15 @@
     font-size: 13px;
     font-weight: 600;
     text-transform: uppercase;
+}
+
+.problem-meta a {
+    color: #9ab8ff;
+    text-decoration: none;
+}
+
+.problem-meta a:hover {
+    color: #73ff73;
 }
 
 /* Problem title. */

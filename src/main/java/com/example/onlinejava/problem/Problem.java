@@ -20,14 +20,9 @@ public class Problem {
   private final String title;
 
   /**
-   * Main category of the problem.
+   * Topic the problem is listed under (and part of its URL).
    */
-  private final String category;
-
-  /**
-   * Problem-solving technique associated with the problem.
-   */
-  private final ProblemType type;
+  private final Topic topic;
 
   /**
    * Difficulty level of the problem.
@@ -67,7 +62,6 @@ public class Problem {
 
   private Problem(Builder builder) {
     this.title = builder.problemTitle;
-    this.category = builder.problemCategory;
     this.description = builder.problemDescription;
     this.difficulty = builder.problemDifficulty;
     this.examples = builder.problemExamples;
@@ -76,22 +70,21 @@ public class Problem {
     this.requirements = builder.problemRequirements;
     this.slug = builder.problemSlug;
     this.starterCode = builder.problemStarterCode;
-    this.type = builder.problemType;
+    this.topic = builder.problemTopic;
 
   }
 
   /**
-   * Builds a {@link Problem} instance, requiring only title, type, and
+   * Builds a {@link Problem} instance, requiring only title, topic, and
    * difficulty up front and defaulting every other field to an empty
    * value until overridden.
    */
   public static class Builder {
     private String problemTitle;
-    private ProblemType problemType;
+    private Topic problemTopic;
     private Difficulty problemDifficulty;
     //Optional
     private String problemMethodSignature = "";
-    private String problemCategory = "";
     private String problemSlug = "";
     private String problemDescription = "";
     private String problemStarterCode = "";
@@ -103,12 +96,12 @@ public class Problem {
      * Creates a builder with the required problem fields.
      *
      * @param problemTitle display title
-     * @param problemType problem-solving technique
+     * @param problemTopic topic the problem is listed under
      * @param problemDifficulty difficulty level
      */
-    public Builder(String problemTitle, ProblemType problemType, Difficulty problemDifficulty) {
+    public Builder(String problemTitle, Topic problemTopic, Difficulty problemDifficulty) {
       this.problemTitle = problemTitle;
-      this.problemType = problemType;
+      this.problemTopic = problemTopic;
       this.problemDifficulty = problemDifficulty;
     }
 
@@ -120,17 +113,6 @@ public class Problem {
      */
     public Builder slug(String problemSlug) {
       this.problemSlug = problemSlug;
-      return this;
-    }
-
-    /**
-     * Sets the problem's main category.
-     *
-     * @param problemCategory problem category
-     * @return this builder
-     */
-    public Builder category(String problemCategory) {
-      this.problemCategory = problemCategory;
       return this;
     }
 
@@ -229,21 +211,21 @@ public class Problem {
   }
 
   /**
-   * Returns the problem category.
+   * Returns the topic the problem is listed under.
    *
-   * @return problem category
+   * @return topic
    */
-  public String getCategory() {
-    return category;
+  public Topic getTopic() {
+    return topic;
   }
 
   /**
-   * Returns the problem type.
+   * Returns the problem's canonical URL.
    *
-   * @return problem type
+   * @return path, e.g. {@code /problems/sorting/bubble-sort}
    */
-  public ProblemType getType() {
-    return type;
+  public String getPath() {
+    return topic.path() + "/" + slug;
   }
 
   /**

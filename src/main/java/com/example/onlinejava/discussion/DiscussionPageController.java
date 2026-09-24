@@ -1,13 +1,15 @@
 package com.example.onlinejava.discussion;
 
+import com.example.onlinejava.Redirects;
 import com.example.onlinejava.problem.Problem;
 import com.example.onlinejava.problem.ProblemRegistry;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.ModelAndView;
 
 /**
  * Serves the discussion page of a problem. The page is a shell; threads are
@@ -29,23 +31,23 @@ public class DiscussionPageController {
   }
 
   /**
-   * Displays a problem's discussion.
+   * Displays a problem's discussion, redirecting old URLs to the canonical one.
    *
-   * @param category problem category from the URL
+   * @param topicSlug topic slug from the URL (or an old category name)
    * @param slug problem slug
-   * @param model view model
-   * @return the discussion template
+   * @return the discussion page, or a 301 redirect
    */
-  @GetMapping("/problems/{category}/{slug}/discussion")
-  public String discussion(
-      @PathVariable final String category,
-      @PathVariable final String slug,
-      final Model model
+  @GetMapping("/problems/{topicSlug}/{slug}/discussion")
+  public ModelAndView discussion(
+      @PathVariable final String topicSlug,
+      @PathVariable final String slug
   ) {
-    final Problem problem = problemRegistry.findProblem(category, slug)
+    final Problem problem = problemRegistry.findBySlug(slug)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
             "Problem not found"));
-    model.addAttribute("problem", problem);
-    return "discussion";
+    if (!problem.getTopic().slug().equals(topicSlug)) {
+      return Redirects.permanent(problem.getPath() + "/discussion");
+    }
+    return new ModelAndView("discussion", Map.of("problem", problem));
   }
 }

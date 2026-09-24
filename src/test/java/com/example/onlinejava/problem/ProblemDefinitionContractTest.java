@@ -23,8 +23,7 @@ class ProblemDefinitionContractTest {
 
     assertThat(problem.getSlug()).matches("[a-z0-9]+(-[a-z0-9]+)*");
     assertThat(problem.getTitle()).isNotBlank();
-    assertThat(problem.getCategory()).isNotBlank();
-    assertThat(problem.getType()).isNotNull();
+    assertThat(problem.getTopic()).isNotNull();
     assertThat(problem.getDifficulty()).isNotNull();
     assertThat(problem.getMethodSignature()).isNotBlank();
   }

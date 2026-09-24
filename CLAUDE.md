@@ -56,7 +56,9 @@ Two mutually exclusive `SecurityFilterChain` beans in `com.example.onlinejava.se
 
 ### Problem pages
 
-Arrays problems are already generic. Each is a `ProblemDefinition` class registered in `problem.ProblemRegistry`, rendered by one route (`/problems/{category}/{slug}`), one template (`problem.html`) and one script (`problem.js`). The hidden-test harness is built server-side by `buildTestSource`. The legacy exception is `collections/longest-unique-substring`, which still has its own template, CSS and JS, and builds its test source client-side. Don't add more one-off problem pages; migrate them onto the registry instead (ask first if unsure).
+Every problem is a `ProblemDefinition` class (in `problem.datastructures` or `problem.algorithms`) tagged with a `problem.Topic` and registered in `problem.ProblemRegistry`. It's rendered by one route (`/problems/{topicSlug}/{slug}`), one template (`problem.html`) and one script (`problem.js`); old category URLs get a 301 via `Redirects.permanent`. The hidden-test harness is built server-side by `buildTestSource`. Every new problem needs reference solutions at `src/test/resources/solutions/{slug}.java` and `{slug}.wrong.java`, or `HarnessVerificationTest` fails. Never add one-off problem pages.
+
+`Topic` (with its `Section`: Data Structures / Algorithms) drives the navbar menus (`problem.NavigationModelAdvice`), the `/problems` overview and the `/problems/{topicSlug}` topic pages. Topic slugs are public URLs.
 
 ### Users, discussions and attachments
 
@@ -80,7 +82,7 @@ Arrays problems are already generic. Each is a `ProblemDefinition` class registe
 - Controller tests use `@WebMvcTest`: `@Import(SecurityConfig.class)` for production rules, or `DevSecurityConfig` with profile `dev`.
 - Repository and service tests use `@DataJpaTest` + `@AutoConfigureTestDatabase(replace = NONE)` + `@Import(TestcontainersConfiguration.class)`, which runs a real PostgreSQL through Testcontainers, so Docker must be running.
 
-Problem list pages (`/problems`, `/problems/arrays`, `/problems/collections`, `/problems/algorithms`) are static category listings that link to individual problem pages; `fragments/navbar.html` is a shared Thymeleaf fragment included via `th:replace` across pages.
+`fragments/navbar.html` is a shared Thymeleaf fragment included via `th:replace` across pages.
 
 ### CI/CD
 

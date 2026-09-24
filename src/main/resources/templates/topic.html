@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title th:text="${topicView.topic.title()} + ' | Online Java'">Topic | Online Java</title>
+
+    <link rel="stylesheet"
+          th:href="@{/css/site.css}">
+</head>
+
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container">
+
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a th:href="@{/problems}">Problems</a>
+        <span aria-hidden="true">›</span>
+        <span th:text="${topicView.topic.section().title()}">Algorithms</span>
+    </nav>
+
+    <h1 class="page-title" th:text="${topicView.topic.title()}">Topic</h1>
+
+    <p class="page-description" th:text="${topicView.topic.description()}">Description</p>
+
+    <th:block th:replace="~{fragments/problem-list :: problemList(${topicView.problems})}"></th:block>
+
+    <!-- Quick links to the other topics of the same section. -->
+    <h2 class="section-title">
+        More in <span th:text="${topicView.topic.section().title()}">Algorithms</span>
+    </h2>
+    <ul class="topic-chips">
+        <li th:each="sibling : ${siblings}" th:unless="${sibling == topicView.topic}">
+            <a th:href="@{${sibling.path()}}" th:text="${sibling.title()}">Topic</a>
+        </li>
+    </ul>
+
+</main>
+
+</body>
+</html>

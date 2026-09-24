@@ -1,9 +1,9 @@
-package com.example.onlinejava.problem.arrays;
+package com.example.onlinejava.problem.algorithms;
 
 import com.example.onlinejava.problem.Difficulty;
 import com.example.onlinejava.problem.Problem;
 import com.example.onlinejava.problem.ProblemDefinition;
-import com.example.onlinejava.problem.ProblemType;
+import com.example.onlinejava.problem.Topic;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -21,9 +21,8 @@ public class BubbleSortProblem implements ProblemDefinition {
    */
   @Override
   public Problem getProblem() {
-    return new Problem.Builder("Bubble Sort", ProblemType.SORTING, Difficulty.EASY)
+    return new Problem.Builder("Bubble Sort", Topic.SORTING, Difficulty.EASY)
         .slug("bubble-sort")
-        .category("Arrays")
         .description("Sort an array using the Bubble Sort algorithm.")
         .methodSignature("public static void bubbleSort(int[] numbers)")
         .starterCode("// Write your solution here")

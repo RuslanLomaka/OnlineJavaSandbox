@@ -3,6 +3,7 @@ package com.example.onlinejava.discussion;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -29,7 +30,7 @@ class DiscussionPageControllerTest {
 
   @Test
   void rendersDiscussionPageForRegisteredProblem() throws Exception {
-    mockMvc.perform(get("/problems/arrays/bubble-sort/discussion"))
+    mockMvc.perform(get("/problems/sorting/bubble-sort/discussion"))
         .andExpect(status().isOk())
         .andExpect(view().name("discussion"))
         .andExpect(model().attributeExists("problem"))
@@ -37,10 +38,15 @@ class DiscussionPageControllerTest {
   }
 
   @Test
-  void returns404ForUnknownProblemOrWrongCategory() throws Exception {
-    mockMvc.perform(get("/problems/arrays/nope/discussion"))
+  void returns404ForUnknownProblem() throws Exception {
+    mockMvc.perform(get("/problems/sorting/nope/discussion"))
         .andExpect(status().isNotFound());
-    mockMvc.perform(get("/problems/collections/bubble-sort/discussion"))
-        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void oldUrlRedirectsPermanentlyToCanonicalDiscussion() throws Exception {
+    mockMvc.perform(get("/problems/arrays/bubble-sort/discussion"))
+        .andExpect(status().isMovedPermanently())
+        .andExpect(redirectedUrl("/problems/sorting/bubble-sort/discussion"));
   }
 }

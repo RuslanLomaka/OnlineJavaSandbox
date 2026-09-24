@@ -39,7 +39,7 @@
 
     <header class="discussion-header">
         <a class="back-link"
-           th:href="@{/problems/{category}/{slug}(category=${#strings.toLowerCase(problem.category)},slug=${problem.slug})}">
+           th:href="@{${problem.path}}">
             &larr; Back to problem
         </a>
         <h1>
