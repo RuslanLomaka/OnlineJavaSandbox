@@ -60,7 +60,7 @@ It's deliberately unfinished and honest about it — see [Current limitations](#
 
 - Every pull request runs Checkstyle (Google Java Style), the full JUnit/Spring MVC-slice/Testcontainers-backed test suite against a real PostgreSQL container, the Node-based JS unit test suite (editor autocomplete, formatter, console classifier — pure functions, no framework needed), and a SonarQube Cloud quality gate that blocks merging on new bugs, vulnerabilities, or security hotspots.
 - CodeRabbit posts an AI-generated review with security-focused instructions per package on every pull request.
-- Renovate opens grouped, scheduled pull requests for dependency updates (Maven minor/patch bumps grouped together, GitHub Actions grouped together, major bumps always left as their own reviewable PR).
+- Renovate opens grouped pull requests for dependency updates (Maven minor/patch bumps grouped together, GitHub Actions grouped together, other major bumps left as their own reviewable PR) — except Postgres, where major-version bumps are disabled outright rather than left for review: one was merged as a routine tag swap and crash-looped the production database, since a Postgres major bump needs `pg_upgrade` or a dump/restore first, not just an image tag change.
 - Pushes to `master` deploy automatically: GitHub Actions connects to the Raspberry Pi over Tailscale, resets it to `origin/master`, and rebuilds with `docker compose up -d --build`. There is no staging environment.
 
 ## Tech stack
@@ -503,7 +503,9 @@ Every pull request against `master` runs Checkstyle, the full Java test suite ag
 
 CI does not run a RabbitMQ service — verified that the test suite still passes without one reachable, since Spring AMQP retries connecting in the background rather than failing application startup. The only cost is a noisy (harmless) connection-refused stack trace in the CI test logs.
 
-Renovate (`renovate.json`) opens grouped, weekly pull requests for outdated dependencies — Maven minor/patch bumps grouped into one PR, GitHub Actions grouped into another, and major version bumps always left as their own individually-reviewable PR. It goes through the exact same CI pipeline as a human PR before it's mergeable, and is never auto-merged, precisely because there's no staging environment to catch a bad bump before it reaches production.
+Renovate (`renovate.json`) opens grouped pull requests for outdated dependencies — Maven minor/patch bumps grouped into one PR, GitHub Actions grouped into another, and other major version bumps left as their own individually-reviewable PR. It goes through the exact same CI pipeline as a human PR before it's mergeable, and is never auto-merged, precisely because there's no staging environment to catch a bad bump before it reaches production.
+
+One dependency is exempt from even getting a PR: Postgres major-version bumps are disabled entirely, after one was merged as a routine `docker-compose` tag update and crash-looped the production database on the Pi — a Postgres major upgrade needs `pg_upgrade` or a dump/restore first, and there's no way to express that as a mergeable one-line diff, so Renovate no longer proposes it at all.
 
 ## Code review with CodeRabbit
 
