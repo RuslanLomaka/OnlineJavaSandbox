@@ -1,0 +1,7 @@
+        int bestSum = numbers[0];
+        int currentSum = numbers[0];
+        for (int i = 1; i < numbers.length; i++) {
+            currentSum = Math.max(numbers[i], currentSum + numbers[i]);
+            bestSum = Math.max(bestSum, currentSum);
+        }
+        return bestSum;

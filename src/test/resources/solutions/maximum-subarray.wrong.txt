@@ -1,0 +1,5 @@
+        int total = 0;
+        for (int number : numbers) {
+            total += number;
+        }
+        return total; // Wrong on purpose: sums the whole array instead of the best subarray.

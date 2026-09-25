@@ -3,6 +3,7 @@ package com.example.onlinejava.problem;
 import com.example.onlinejava.problem.algorithms.BinarySearchProblem;
 import com.example.onlinejava.problem.algorithms.BubbleSortProblem;
 import com.example.onlinejava.problem.algorithms.LongestUniqueSubstringProblem;
+import com.example.onlinejava.problem.datastructures.MaximumSubarrayProblem;
 import com.example.onlinejava.problem.datastructures.TwoSumProblem;
 import java.util.Comparator;
 import java.util.EnumMap;
@@ -36,6 +37,7 @@ public class ProblemRegistry {
     register(new BinarySearchProblem());
     register(new LongestUniqueSubstringProblem());
     register(new TwoSumProblem());
+    register(new MaximumSubarrayProblem());
   }
 
   /**
