@@ -72,6 +72,27 @@ body {
     background: #d04848;
 }
 
+/* Mobile hamburger toggle for the rest of the navbar (site.css media query
+   below). Hidden and inert on desktop: .navbar-links renders as if these
+   two wrapper elements weren't there, so desktop layout is unaffected. */
+.navbar-toggle {
+    display: none;
+}
+
+.navbar-toggle-summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.navbar-toggle-summary::-webkit-details-marker {
+    display: none;
+}
+
+.navbar-links {
+    display: contents;
+}
+
 .container {
     width: min(1100px, 94%);
     margin: 30px auto;
@@ -163,18 +184,43 @@ body {
 
 @media (max-width: 850px) {
     .navbar {
-        align-items: flex-start;
-        flex-direction: column;
-        padding: 18px;
+        flex-wrap: wrap;
+        padding: 12px 18px;
     }
 
     .navbar-left {
         flex-wrap: wrap;
+        width: 100%;
     }
 
+    .navbar-toggle {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 6px;
+        font-size: 22px;
+        line-height: 1;
+    }
+
+    /* Collapsed by default; ":has()" reveals both when the toggle is open. */
+    .navbar-links,
     .navbar-right {
+        display: none;
+    }
+
+    .navbar:has(.navbar-toggle[open]) .navbar-links {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .navbar:has(.navbar-toggle[open]) .navbar-right {
+        display: flex;
         width: 100%;
         justify-content: space-between;
+        align-items: center;
+        margin-top: 14px;
     }
 }
 /* ---------- Navbar menus (Data Structures / Algorithms) ---------- */
