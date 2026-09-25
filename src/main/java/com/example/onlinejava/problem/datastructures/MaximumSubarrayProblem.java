@@ -31,6 +31,7 @@ public class MaximumSubarrayProblem implements ProblemDefinition {
             "The array has at least one element.",
             "The subarray must be contiguous and non-empty.",
             "Handle arrays where every value is negative.",
+            "Array values are between -10,000 and 10,000, inclusive.",
             "Run in O(n) time."
         ))
         .examples(List.of(
@@ -98,6 +99,12 @@ public class MaximumSubarrayProblem implements ProblemDefinition {
                         "single negative then large positive",
                         new int[]{-1, 100},
                         100
+                );
+
+                test(
+                        "values at the documented bound",
+                        new int[]{10000, -10000, 10000, 10000, -5000, 10000},
+                        25000
                 );
 
                 System.out.println();
