@@ -17,6 +17,8 @@ public final class SecurityHeaders {
    *       scripts also carry SRI hashes); no inline scripts or eval.</li>
    *   <li>Inline styles are allowed because CodeMirror, EasyMDE and the
    *       emoji picker set styles at runtime.</li>
+   *   <li>Fonts from this site, cdnjs, and {@code data:} URLs (the code
+   *       editor's icon font, e.g. the fold arrows, is embedded in its CSS).</li>
    *   <li>Images only from this site (screenshots) and GitHub avatars.</li>
    *   <li>{@code fetch()} only to this site.</li>
    *   <li>Web workers (the code editor's) only from this site.</li>
@@ -27,7 +29,7 @@ public final class SecurityHeaders {
       "default-src 'self'",
       "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
       "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
-      "font-src 'self' https://cdnjs.cloudflare.com",
+      "font-src 'self' data: https://cdnjs.cloudflare.com",
       "img-src 'self' data: blob: https://avatars.githubusercontent.com",
       "connect-src 'self'",
       "worker-src 'self'",
