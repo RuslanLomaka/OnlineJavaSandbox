@@ -337,7 +337,11 @@
     }
 
     .solution-area {
-        min-height: 700px;
+        min-height: 60vh;
+    }
+
+    .problem-editor {
+        min-height: 360px;
     }
 }
 
