@@ -1,82 +1,125 @@
 # Online Java Sandbox
 
-> A browser-based Java playground and programming-practice platform built with Spring Boot, Docker, PostgreSQL, Thymeleaf, and GitHub OAuth.
+> A browser-based Java playground and programming-practice platform built with Spring Boot, Docker, RabbitMQ, PostgreSQL, and GitHub OAuth — designed and built solo, in the open, as a real production system rather than a demo.
 
-**Status:** Early development  
-**Last updated:** 22 September 2026  
+**Status:** Early development, live in production
+**Last updated:** 25 September 2026
 **Live demo:** https://java.ruslanlomaka.org
 
-## What it does
+## The idea
 
-Online Java Sandbox lets users:
+Most "write code in the browser" projects stop at a `<textarea>` and an `eval`. Online Java Sandbox exists to answer a harder question: what does it actually take to let strangers run arbitrary Java on your server, safely, at production quality, end to end?
 
-- sign in with GitHub;
-- write Java code in the browser;
-- compile and run it inside disposable Docker containers;
-- solve structured Java problems;
-- see automatic test results;
-- edit in a VS Code-style editor (Monaco): rainbow brackets, indentation guides,
-  Java autocomplete, and Ctrl+Alt+L to reformat, all computed in the browser;
-- discuss each problem with other users: threaded replies, Markdown with
-  copyable code blocks, emoji, reactions and screenshots.
+That single problem — safe arbitrary code execution — touches almost every discipline in backend engineering, which is exactly why it was chosen as the spine of this project:
 
-Problems are grouped into two navbar menus, **Data Structures** (Arrays,
-Strings, Hash Maps & Sets, Stacks & Queues, Linked Lists, Trees, Graphs, Heaps)
-and **Algorithms** (Sorting, Searching, Two Pointers, Sliding Window,
-Recursion & Backtracking, Dynamic Programming, Greedy).
+- **Untrusted execution.** Submitted code runs inside disposable, network-isolated Docker containers with dropped capabilities, resource limits, and automatic cleanup, invoked over a real message-queue request/reply hop (RabbitMQ), not a direct method call.
+- **Real infrastructure, not a sandboxed demo.** This isn't a repo you `docker compose up` and forget. It's deployed 24/7 on a Raspberry Pi at home, fronted by a Cloudflare Tunnel, with GitHub Actions deploying straight to it on every merge to `master`, no staging environment, real consequences for a bad merge.
+- **A full application around that core**, not just a code runner: GitHub OAuth login, a discussion forum per problem with threaded replies, Markdown, reactions and screenshot uploads, and a real in-browser code editor (Monaco) with IntelliJ-style shortcuts and Java formatting that runs entirely client-side.
+- **Defense in depth everywhere a user can touch the system**: locked-down containers for code execution, a two-layer sanitizer plus a strict CSP for user-generated Markdown, re-encoded and dimension-capped image uploads, per-user rate limiting, and CSRF protection on every state change.
+- **A real delivery pipeline**, not just `git push`: Checkstyle, a full test suite against a real Postgres container, a SonarQube Cloud quality gate, AI-assisted review from CodeRabbit on every pull request, and Renovate opening automated dependency-update PRs.
 
-Current problems:
+It's deliberately unfinished and honest about it — see [Current limitations](#current-limitations) and the [Roadmap](#roadmap) below. The goal isn't a polished product; it's a project transparent and well-documented enough that someone can read it end to end and actually learn how these pieces fit together, or use it to build a portfolio of their own. See [Looking for contributors](#looking-for-contributors).
 
-- Bubble Sort (Algorithms › Sorting)
-- Binary Search (Algorithms › Searching)
-- Longest Substring Without Repeating Characters (Algorithms › Sliding Window)
-- Two Sum (Data Structures › Hash Maps & Sets)
+## What's done
+
+**Core platform**
+
+- Sign in with GitHub (OAuth2); a database user is created on first login and refreshed on every later one.
+- Write, format, and run Java in the browser, then see automatic pass/fail test results in a terminal-style, colour-coded console.
+- Solve structured Java problems grouped into two navbar menus: **Data Structures** (Arrays, Strings, Hash Maps & Sets, Stacks & Queues, Linked Lists, Trees, Graphs, Heaps) and **Algorithms** (Sorting, Searching, Two Pointers, Sliding Window, Recursion & Backtracking, Dynamic Programming, Greedy). Four problems are live today: Bubble Sort, Binary Search, Two Sum, and Longest Substring Without Repeating Characters.
+- Discuss each problem with other users: threaded replies, Markdown with copyable syntax-highlighted code blocks, emoji, six fixed reactions, and pasted or dropped screenshots.
+
+**Code editor**
+
+- Monaco (the VS Code editor component), vendored and trimmed to only the languages this project needs: rainbow brackets, indentation guides, Java autocomplete, and IntelliJ shortcuts (Ctrl+Alt+L to format, Ctrl+Alt+O to optimize imports, Ctrl+Enter to run, Ctrl+D to duplicate a line).
+- Java formatting runs **entirely client-side**: a vendored, lazily-loaded build of Prettier plus its Java plugin formats the code in the browser, with no round trip to the server. Formatting a whole file and formatting just a method body (used when a hidden-test harness needs to stay hidden) both go through the same formatter, wrapping/unwrapping a synthetic class as needed. This replaced an earlier server-side approach built on the Eclipse JDT parser/formatter — moving it into the browser cut out a network hop and a whole Java dependency.
+- A dedicated output classifier colours every line of program/test output by what it is — pass, fail, compiler error, stack trace, exception, summary — and renders a pass/fail status badge above the console. Output is always inserted as text, never HTML, so a program that prints `<script>` just prints that string.
+
+**Problem architecture**
+
+- Every problem is a small Java class implementing `ProblemDefinition`, tagged with a topic, and registered in a central `ProblemRegistry` — no per-problem controllers, pages, or JavaScript.
+- One route (`/problems/{topic}/{slug}`), one template, one script renders every problem; old category URLs 301-redirect to the new ones.
+- The full test harness — imports, the student's code, and the hidden tests — is assembled **server-side**. Only the student's method body is ever sent to the browser, so hidden tests stay hidden.
+- A dedicated verification test compiles and runs every harness against both a known-correct and a known-wrong reference solution, so a broken problem definition fails the build instead of shipping silently.
+
+**Discussions and user content**
+
+- Two-level threads (a root post plus a flat list of replies, with "↪ replying to @user" quoting), soft delete, author-only edit/delete enforced server-side.
+- Markdown is rendered server-side with raw HTML escaped, passed through an OWASP allowlist sanitizer, and sanitized again in the browser with DOMPurify — two independent layers, not one.
+- Screenshot uploads are format-sniffed (not trusted by file extension), size- and dimension-capped, and **re-encoded** on the server, which strips EXIF/GPS metadata and anything else hidden in the file. Unused uploads are purged after 24 hours by a scheduled job.
+- Every page ships a strict Content-Security-Policy; third-party scripts are pinned CDN versions with SRI hashes or vendored locally.
+- Posts, reactions, and uploads are all rate-limited per user (Bucket4j, backed by an in-memory Caffeine cache).
+
+**Execution pipeline**
+
+- The web tier never runs code directly. A controller hands submitted source to a gateway that sends it over RabbitMQ (using direct reply-to for the RPC-style reply) and blocks until a listener — running on a separate thread in the same process — returns a result.
+- Every submission gets a random correlation ID propagated through SLF4J's MDC across the whole journey (controller → queue → listener → container → reply), so one request's full path is grep-able in the logs.
+- Runner containers: no network access, dropped Linux capabilities, CPU/process/file-descriptor/output-size limits, a read-only filesystem, an execution timeout, a bounded number of concurrent containers, automatic cleanup plus a scheduled reaper for orphans, and an image pinned by digest rather than a mutable tag.
+
+**Delivery pipeline**
+
+- Every pull request runs Checkstyle (Google Java Style), the full JUnit/Spring MVC-slice/Testcontainers-backed test suite against a real PostgreSQL container, the Node-based JS unit test suite (editor autocomplete, formatter, console classifier — pure functions, no framework needed), and a SonarQube Cloud quality gate that blocks merging on new bugs, vulnerabilities, or security hotspots.
+- CodeRabbit posts an AI-generated review with security-focused instructions per package on every pull request.
+- Renovate opens grouped, scheduled pull requests for dependency updates (Maven minor/patch bumps grouped together, GitHub Actions grouped together, major bumps always left as their own reviewable PR).
+- Pushes to `master` deploy automatically: GitHub Actions connects to the Raspberry Pi over Tailscale, resets it to `origin/master`, and rebuilds with `docker compose up -d --build`. There is no staging environment.
 
 ## Tech stack
 
-- Java
-- Spring Boot
-- Spring Security
-- GitHub OAuth
-- Thymeleaf
-- PostgreSQL + Flyway migrations
-- Docker
-- Docker Compose
-- RabbitMQ
-- Monaco editor + Prettier (prettier-plugin-java), vendored, running in the browser
-- Cloudflare Tunnel
-- Raspberry Pi
-- EasyMDE, highlight.js, DOMPurify, emoji-picker-element (discussion UI)
-- commonmark-java + OWASP Java HTML Sanitizer (safe Markdown rendering)
-- Bucket4j (rate limiting)
-- JUnit 5, Spring MVC slice tests, Testcontainers (PostgreSQL)
-- Checkstyle (Google Java Style)
-- SonarQube Cloud
-- CodeRabbit (AI pull-request review)
+| Category | Technologies |
+|---|---|
+| Backend | Java 21, Spring Boot 4.1, Spring MVC, Spring Security + OAuth2 client (GitHub login), Spring Data JPA, Spring AMQP, Spring Validation, Thymeleaf |
+| Data & messaging | PostgreSQL, Flyway migrations, RabbitMQ (request/reply execution hop), Caffeine (in-memory rate-limit cache) |
+| Code execution | Docker, Docker Compose, `eclipse-temurin` JDK runner images |
+| Editor & frontend | Monaco editor (vendored), Prettier + `prettier-plugin-java` (vendored, client-side Java formatting), EasyMDE, highlight.js, DOMPurify, emoji-picker-element |
+| Content & security | commonmark-java, OWASP Java HTML Sanitizer, Bucket4j (rate limiting), Content-Security-Policy + hardening headers |
+| Testing & quality | JUnit 5, Spring MVC slice tests, Testcontainers (PostgreSQL), Node.js built-in test runner (`node --test`, for the JS formatter/console/autocomplete logic), Checkstyle (Google Java Style), SonarQube Cloud |
+| Delivery & ops | GitHub Actions, Renovate (automated dependency updates), CodeRabbit (AI pull-request review), Cloudflare Tunnel, Raspberry Pi, Tailscale (CI-to-Pi deploy access) |
+
+## Architecture at a glance
+
+Each feature lives in its own package, and the dependencies between them only
+ever point one way — verified directly against the imports, not just intended:
+
+```mermaid
+flowchart TB
+    Root["root\nPageController / LoginController"]
+    Security["security\nSecurityConfig / DevSecurityConfig"]
+    Sandbox["sandbox\ncode-execution pipeline"]
+    Problem["problem\nProblemDefinition / ProblemRegistry"]
+    User["user\nAppUser / OAuth2 login"]
+    Discussion["discussion\nthreads, replies, reactions"]
+    Attachment["attachment\nscreenshot uploads"]
+    Ratelimit["ratelimit\nper-user Bucket4j limits"]
+
+    Root --> Problem
+    Root --> User
+    Security --> User
+    Sandbox --> Problem
+    Discussion --> User
+    Discussion --> Attachment
+    Discussion --> Ratelimit
+    Attachment --> User
+    Attachment --> Ratelimit
+```
+
+No package ever imports back "up" the graph — `problem` and `user` don't know
+`sandbox` or `discussion` exist, which is what keeps each feature independently
+testable and removable.
 
 ## How execution works
 
 Code execution goes through RabbitMQ rather than being handled directly by the
 web request thread:
 
-```text
-Browser
-  ↓
-Spring Boot controller (SandboxExecutionGateway)
-  ↓
-RabbitMQ queue
-  ↓
-Listener (SandboxExecutionListener) — same app process, separate thread
-  ↓
-Temporary Main.java
-  ↓
-Disposable Docker container
-  ↓
-javac + java
-  ↓
-Result sent back through RabbitMQ (direct reply-to)
-  ↓
-Output returned to browser
+```mermaid
+flowchart LR
+    A["Browser"] --> B["SandboxController /\nSandboxExecutionGateway"]
+    B -->|"RabbitMQ RPC\n(direct reply-to)"| C["RabbitMQ queue"]
+    C --> D["SandboxExecutionListener\n(separate thread, same process)"]
+    D --> E["Temporary Main.java\nunder sandbox.root"]
+    E --> F["Disposable Docker container\njavac + java"]
+    F -->|"result"| C
+    C -->|"reply routed back"| A
 ```
 
 The listener runs in the same Spring Boot process as the web tier — this isn't
@@ -93,20 +136,19 @@ Raspberry Pi where there's no separate log aggregation tool.
 
 Runner containers currently use:
 
-```text
-No network access
-CPU restriction
-Process restriction
-Read-only filesystem
-Dropped Linux capabilities
-File descriptor and file size ulimits
-Execution timeout
-Concurrency limit (bounded number of containers running at once)
-Output size cap (containers are killed if output exceeds the limit)
-Automatic cleanup, plus a scheduled reaper as a safety net for orphaned
-  containers/directories
-Docker image pinned by digest, not by a mutable tag
-```
+| Restriction | How |
+|---|---|
+| Network | `--network none` — no network access at all |
+| CPU | `--cpus` limit |
+| Processes | `--pids-limit` |
+| Filesystem | `--read-only` root, small writable `tmpfs` at `/work` only |
+| Capabilities | `--cap-drop ALL` |
+| Resource ulimits | file descriptor and file size limits |
+| Time | hard execution timeout, container force-killed past it |
+| Concurrency | bounded number of containers running at once |
+| Output | size cap — containers are killed if output exceeds the limit |
+| Cleanup | automatic on every run, plus a scheduled reaper for orphaned containers/directories |
+| Image | pinned by digest, not by a mutable tag |
 
 Memory limits (`--memory`) are set on the container but are not
 currently enforced on the host, so this is not yet a real resource
@@ -138,20 +180,16 @@ Every registered problem has a discussion page at
 
 Security measures:
 
-- Markdown is rendered on the server with raw HTML escaped. The result then
-  passes through an OWASP allowlist sanitizer, and the browser sanitizes it
-  again with DOMPurify. Images may only point at this site's own
-  `/attachments/{uuid}` URLs, so there are no tracking pixels.
-- Screenshots are limited to 2 MB and 4096×4096 pixels. The format is detected
-  from the bytes, not the file name. Every image is **re-encoded**, which strips
-  EXIF/GPS metadata and anything hidden in the file. Images are served with
-  `nosniff` and a sandboxing CSP. Uploads that no post uses are deleted
-  after 24 hours.
-- Edit and delete rights are checked on the server. Every state change needs a
-  CSRF token. Posts, reactions and uploads are rate-limited per user
-  (Bucket4j).
-- Every page sends a strict Content-Security-Policy. Third-party scripts come
-  from pinned CDN versions with SRI hashes.
+| Threat | Defense |
+|---|---|
+| XSS via Markdown | Server-side HTML escaping → OWASP allowlist sanitizer → DOMPurify again in the browser (two independent layers) |
+| Tracking / exfiltration via images | Images may only point at this site's own `/attachments/{uuid}` URLs |
+| Malicious/oversized uploads | 2 MB / 4096×4096 px caps; format detected from file bytes, not the file name; every image is **re-encoded**, stripping EXIF/GPS metadata and anything else hidden in the file |
+| Stale/unused uploads | Purged automatically after 24 hours if no post embeds them |
+| IDOR (editing/deleting someone else's post) | Ownership checked server-side, never trusted from the client |
+| CSRF | Every state-changing request requires a CSRF token |
+| Abuse / spam | Posts, reactions and uploads rate-limited per user (Bucket4j) |
+| General page-level XSS | Strict Content-Security-Policy on every page; third-party scripts pinned to CDN versions with SRI hashes |
 
 ## Current architecture
 
@@ -166,7 +204,22 @@ Separately, code execution itself now goes through RabbitMQ as a real request/re
 hop instead of being called directly — see [How execution works](#how-execution-works)
 for the full flow and why.
 
+Java formatting inside the editor is a third, independent pipeline: a vendored
+Prettier build with the Java plugin runs entirely in the browser (see
+[What's done](#whats-done)), so it has no dependency on the sandbox, RabbitMQ,
+or the server at all.
+
 ## Roadmap
+
+| Area | Progress |
+|---|---|
+| Near term | 9 / 12 |
+| Database & users | 3 / 7 |
+| Security | 2 / 6 |
+| Delivery & tooling | 4 / 5 |
+| Collaboration | 0 / 7 |
+| Optional ideas | 0 / 5 |
+| **Total** | **18 / 42** |
 
 ### Near term
 
@@ -177,6 +230,8 @@ for the full flow and why.
 - [x] add execution queue (concurrency limit);
 - [x] migrate every problem onto the generic problem page;
 - [x] group problems into Data Structures / Algorithms topics;
+- [x] replace CodeMirror with Monaco;
+- [x] move Java formatting fully client-side (Prettier), with a colour-coded terminal-style console;
 - [ ] improve error handling;
 - [ ] improve mobile layout;
 - [ ] add more Java problems.
@@ -199,6 +254,14 @@ for the full flow and why.
 - [ ] reduce Docker socket exposure;
 - [x] add abuse prevention for discussions (rate limits, sanitization);
 - [ ] add stronger isolation.
+
+### Delivery and tooling
+
+- [x] Checkstyle enforced in CI;
+- [x] SonarQube Cloud quality gate;
+- [x] AI-assisted pull-request review (CodeRabbit);
+- [x] automated dependency updates (Renovate);
+- [ ] a staging environment before production deploys.
 
 ### Collaboration
 
@@ -235,9 +298,10 @@ I am ready to explain:
 - how submitted Java code runs in Docker;
 - how RabbitMQ is used as a request/reply hop for code execution, and how
   correlation-ID logging traces one request across it;
+- how the in-browser Java formatter works, and why it moved off the server;
 - how the Raspberry Pi deployment works;
 - how PostgreSQL and Docker Compose are configured;
-- how the CI/CD pipeline and quality gates work;
+- how the CI/CD pipeline and quality gates (Checkstyle, SonarQube Cloud, CodeRabbit, Renovate) work;
 - why the remaining problem pages still need migrating to the generic architecture.
 
 What I need from contributors:
@@ -435,9 +499,11 @@ for watching queue depth while multiple submissions run concurrently.
 
 ## CI/CD
 
-Every pull request against `master` runs Checkstyle, the full test suite against a real PostgreSQL service container, and a SonarQube Cloud analysis with a quality gate that blocks merging on new bugs, vulnerabilities, or security hotspots. Pushes to `master` additionally deploy automatically: GitHub Actions connects to the Raspberry Pi over Tailscale, resets it to `origin/master`, and runs `docker compose up -d --build`. There is no staging environment — a merge to `master` goes straight to the live site.
+Every pull request against `master` runs Checkstyle, the full Java test suite against a real PostgreSQL service container, the Node-based JS unit tests (editor formatter, console classifier, autocomplete), and a SonarQube Cloud analysis with a quality gate that blocks merging on new bugs, vulnerabilities, or security hotspots. Pushes to `master` additionally deploy automatically: GitHub Actions connects to the Raspberry Pi over Tailscale, resets it to `origin/master`, and runs `docker compose up -d --build`. There is no staging environment — a merge to `master` goes straight to the live site.
 
 CI does not run a RabbitMQ service — verified that the test suite still passes without one reachable, since Spring AMQP retries connecting in the background rather than failing application startup. The only cost is a noisy (harmless) connection-refused stack trace in the CI test logs.
+
+Renovate (`renovate.json`) opens grouped, weekly pull requests for outdated dependencies — Maven minor/patch bumps grouped into one PR, GitHub Actions grouped into another, and major version bumps always left as their own individually-reviewable PR. It goes through the exact same CI pipeline as a human PR before it's mergeable, and is never auto-merged, precisely because there's no staging environment to catch a bad bump before it reaches production.
 
 ## Code review with CodeRabbit
 
@@ -466,7 +532,8 @@ docker compose up -d --build
 - no working memory limit on the current host (the container flag is set but not enforced there);
 - problems are still defined in code; only users and discussions are stored in the database;
 - discussions don't update live; new messages appear after a page reload;
-- code execution now has a new dependency: if RabbitMQ is down or unreachable, submissions fail gracefully (a clear error message, not a crash), but the app cannot run any code at all until it's back — a single point of failure that didn't exist when execution was a direct method call.
+- code execution now has a new dependency: if RabbitMQ is down or unreachable, submissions fail gracefully (a clear error message, not a crash), but the app cannot run any code at all until it's back — a single point of failure that didn't exist when execution was a direct method call;
+- Java formatting depends on the browser downloading and running a ~480 KB vendored Prettier bundle on first use; there's no server-side fallback if that fails to load.
 
 ## Author
 
