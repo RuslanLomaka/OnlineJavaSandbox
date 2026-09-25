@@ -21,31 +21,49 @@
             Online Java
         </a>
 
-        <a th:href="@{/sandbox}">
-            Sandbox
-        </a>
-
-        <details class="nav-menu"
-                 th:each="section : ${navSections}">
-
-            <summary th:text="${section.title}">Data Structures</summary>
-
-            <ul class="nav-menu-list">
-                <li th:each="topic : ${section.topics}">
-                    <a th:href="@{${topic.path}}"
-                       th:classappend="${topic.problemCount == 0} ? 'nav-topic-empty'">
-                        <span th:text="${topic.title}">Topic</span>
-                        <span class="nav-count"
-                              th:text="${topic.problemCount == 0} ? 'soon' : ${topic.problemCount}">1</span>
-                    </a>
-                </li>
-            </ul>
-
+        <!--
+            Mobile-only hamburger toggle: reveals the rest of the navbar
+            (hidden under 850px, see site.css) without JavaScript. The
+            ":has()" selector in site.css shows/hides based on [open].
+        -->
+        <details class="navbar-toggle">
+            <summary class="navbar-toggle-summary"
+                     aria-label="Menu">&#9776;</summary>
         </details>
 
-        <a th:href="@{/problems}">
-            All problems
-        </a>
+        <!--
+            Collapsed under the navbar-toggle on mobile (site.css); flows
+            inline as before on desktop, where the toggle is hidden.
+        -->
+        <div class="navbar-links">
+
+            <a th:href="@{/sandbox}">
+                Sandbox
+            </a>
+
+            <details class="nav-menu"
+                     th:each="section : ${navSections}">
+
+                <summary th:text="${section.title}">Data Structures</summary>
+
+                <ul class="nav-menu-list">
+                    <li th:each="topic : ${section.topics}">
+                        <a th:href="@{${topic.path}}"
+                           th:classappend="${topic.problemCount == 0} ? 'nav-topic-empty'">
+                            <span th:text="${topic.title}">Topic</span>
+                            <span class="nav-count"
+                                  th:text="${topic.problemCount == 0} ? 'soon' : ${topic.problemCount}">1</span>
+                        </a>
+                    </li>
+                </ul>
+
+            </details>
+
+            <a th:href="@{/problems}">
+                All problems
+            </a>
+
+        </div>
 
     </div>
 
