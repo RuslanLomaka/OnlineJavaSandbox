@@ -474,6 +474,18 @@ Do not commit `.env`. Deploying to a new host (including the Raspberry Pi)
 means setting all of these there manually — they are never carried over by a
 `git pull`/deploy, since `.env` is gitignored on purpose.
 
+**If you already have a `postgres-data` volume from before this repo moved to
+Postgres 18** (the `postgres` service's `volumes:` entry now mounts at
+`/var/lib/postgresql` instead of `/var/lib/postgresql/data`), `docker compose
+up -d --build` will *not* migrate it — the 18+ image expects its data one
+level down from where the old 17-era layout put it, and refuses to start
+rather than risk touching data it doesn't recognize. Either run `pg_upgrade`
+(or a `pg_dump`/restore) into a fresh volume before upgrading, or, if the
+existing data isn't worth keeping, remove the volume (`docker compose down`
+then `docker volume rm <project>_postgres-data`) and let Postgres 18
+initialize a clean one — Flyway rebuilds the schema on the app's next start
+either way.
+
 ## Useful commands
 
 ```bash
