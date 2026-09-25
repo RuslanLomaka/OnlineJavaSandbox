@@ -104,7 +104,9 @@ class SecurityConfigTest {
                 containsString("object-src 'none'"),
                 containsString("frame-ancestors 'none'"),
                 containsString("connect-src 'self'"),
-                containsString("worker-src 'self'"))))
+                containsString("worker-src 'self'"),
+                // Monaco's icon font (fold arrows etc.) is embedded as a data: URL.
+                containsString("font-src 'self' data:"))))
         .andExpect(header().string("X-Frame-Options", "DENY"))
         .andExpect(header().string("Referrer-Policy", "strict-origin-when-cross-origin"));
   }
