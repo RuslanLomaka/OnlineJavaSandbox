@@ -1,0 +1,27 @@
+{
+  "name": "Online Java Sandbox",
+  "short_name": "Online Java",
+  "description": "A browser-based Java playground: write and run Java in the browser, solve structured problems with automatic tests, and discuss them with other users.",
+  "start_url": "/sandbox",
+  "display": "standalone",
+  "background_color": "#151515",
+  "theme_color": "#20242b",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
