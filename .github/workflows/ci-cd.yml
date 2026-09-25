@@ -71,7 +71,7 @@ jobs:
 
       - name: Report Checkstyle violations
         if: always()
-        uses: jwgmeligmeyling/checkstyle-github-action@master
+        uses: jwgmeligmeyling/checkstyle-github-action@v1
         with:
           path: '**/checkstyle-report.xml'
 
