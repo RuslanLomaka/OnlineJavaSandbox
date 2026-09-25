@@ -5,7 +5,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <th:block th:replace="~{fragments/csrf :: meta}"></th:block>
 
     <title>Java Sandbox</title>
 
@@ -31,19 +30,23 @@
     <div class="editor-toolbar-buttons">
         <button id="runButton" type="button" class="editor-button primary">Run</button>
         <button id="formatButton" type="button" class="editor-button">Format</button>
-        <button id="importsButton" type="button" class="editor-button">Optimize imports</button>
         <button id="resetButton" type="button" class="editor-button">Reset</button>
     </div>
 
-    <h2>Console</h2>
-
-    <pre id="console">Waiting...</pre>
+    <!-- Terminal-style output (coloured by /js/console-output.js). -->
+    <section class="terminal" aria-label="Console">
+        <div class="terminal-header">
+            <span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="terminal-title">Console</span>
+            <span id="consoleStatus" class="terminal-status"></span>
+        </div>
+        <pre id="console" class="terminal-body" aria-live="polite"><span class="console-line console-meta">Waiting...</span></pre>
+    </section>
 
 </main>
 
 <!-- Monaco's AMD loader (vendored; see scripts/vendor-monaco.sh). -->
 <script th:src="@{/vendor/monaco-editor-0.56.0/min/vs/loader.js}"></script>
-<script th:src="@{/js/csrf.js}"></script>
 <script type="module" th:src="@{/js/sandbox.js}"></script>
 
 </body>

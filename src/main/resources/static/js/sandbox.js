@@ -1,6 +1,7 @@
-// Sandbox page: a whole-class Java editor plus Run / Format / Optimize imports.
+// Sandbox page: a whole-class Java editor plus Run / Format / Reset.
 // The code is kept in this browser's localStorage so a reload doesn't lose it.
 import { createJavaEditor, editorLog } from "./editor/java-editor.js";
+import { renderConsole } from "./console-output.js";
 
 const STARTER_CODE = `import java.util.*;
 
@@ -16,9 +17,12 @@ const STORAGE_KEY = "sandbox.code";
 
 const runButton = document.getElementById("runButton");
 const formatButton = document.getElementById("formatButton");
-const importsButton = document.getElementById("importsButton");
 const resetButton = document.getElementById("resetButton");
 const consoleOutput = document.getElementById("console");
+const consoleStatus = document.getElementById("consoleStatus");
+
+const showOutput = (text, running = false) =>
+    renderConsole(consoleOutput, text, { status: consoleStatus, running });
 
 function loadSavedCode() {
     try {
@@ -40,10 +44,10 @@ let editor;
 
 async function runCode() {
     runButton.disabled = true;
-    consoleOutput.textContent =
+    showOutput(
         "Compiling...\n" +
         "(If the sandbox is busy running other submissions, " +
-        "this may take a few extra seconds — please wait.)\n";
+        "this may take a few extra seconds — please wait.)", true);
 
     try {
         // /sandbox/run is CSRF-exempt, so no token is needed here.
@@ -52,9 +56,9 @@ async function runCode() {
             headers: { "Content-Type": "text/plain;charset=UTF-8" },
             body: editor.getValue()
         });
-        consoleOutput.textContent = await response.text();
+        showOutput(await response.text());
     } catch (error) {
-        consoleOutput.textContent = "Request failed:\n" + error.message;
+        showOutput("Request failed:\n" + error.message);
     } finally {
         runButton.disabled = false;
     }
@@ -76,7 +80,6 @@ try {
 
     runButton.addEventListener("click", runCode);
     formatButton.addEventListener("click", () => editor.format());
-    importsButton.addEventListener("click", () => editor.organizeImports());
     resetButton.addEventListener("click", () => {
         editor.setValue(STARTER_CODE);
         editor.focus();

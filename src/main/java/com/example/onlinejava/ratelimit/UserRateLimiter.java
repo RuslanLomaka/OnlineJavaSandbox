@@ -28,9 +28,7 @@ public class UserRateLimiter {
     /** Adding or removing a reaction. */
     REACTION(30, Duration.ofMinutes(1)),
     /** Uploading a screenshot. */
-    UPLOAD(10, Duration.ofMinutes(10)),
-    /** Formatting code in the editor. */
-    FORMAT(60, Duration.ofMinutes(1));
+    UPLOAD(10, Duration.ofMinutes(10));
 
     private final int capacity;
 

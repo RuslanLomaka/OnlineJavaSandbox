@@ -137,16 +137,15 @@
 
             </div>
 
-            <!-- Test result panel. -->
-            <div class="test-panel">
-
-                <div class="test-panel-header">
-                    <span>Test Results</span>
+            <!-- Test results, terminal style (coloured by /js/console-output.js). -->
+            <section class="terminal terminal-docked" aria-label="Test results">
+                <div class="terminal-header">
+                    <span class="terminal-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <span class="terminal-title">Test Results</span>
+                    <span id="testStatus" class="terminal-status"></span>
                 </div>
-
-                <pre id="testConsole">Waiting for your solution...</pre>
-
-            </div>
+                <pre id="testConsole" class="terminal-body" aria-live="polite"><span class="console-line console-meta">Waiting for your solution...</span></pre>
+            </section>
 
         </section>
 

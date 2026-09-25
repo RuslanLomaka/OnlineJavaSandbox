@@ -1,6 +1,7 @@
 // Generic problem page: hint toggle, the method-body editor, Run Tests, and
 // the discussion post count next to the "Discussion" link.
 import { createJavaEditor, editorLog } from "./editor/java-editor.js";
+import { renderConsole } from "./console-output.js";
 
 const mainContainer = document.querySelector("main[data-problem-slug]");
 const slug = mainContainer.dataset.problemSlug;
@@ -10,6 +11,10 @@ const runTestsButton = document.getElementById("runTestsButton");
 const formatButton = document.getElementById("formatButton");
 const editorHost = document.getElementById("solutionEditor");
 const testConsole = document.getElementById("testConsole");
+const testStatus = document.getElementById("testStatus");
+
+const showOutput = (text, running = false) =>
+    renderConsole(testConsole, text, { status: testStatus, running });
 
 // Shows or hides the problem hint.
 if (hintButton && hintText) {
@@ -25,7 +30,7 @@ let editor;
 // Runs the user's method body against the problem's hidden tests (server side).
 async function runTests() {
     runTestsButton.disabled = true;
-    testConsole.textContent = "Running tests...";
+    showOutput("Running tests...", true);
     try {
         const response = await fetch(`/problems/${encodeURIComponent(slug)}/run`, {
             method: "POST",
@@ -37,9 +42,9 @@ async function runTests() {
             body: editor.getValue()
         });
         const result = await response.text();
-        testConsole.textContent = response.ok ? result : `Error (${response.status}): ${result}`;
+        showOutput(response.ok ? result : `Error (${response.status}): ${result}`);
     } catch (error) {
-        testConsole.textContent = `Request failed: ${error.message}`;
+        showOutput(`Request failed: ${error.message}`);
     } finally {
         runTestsButton.disabled = false;
     }

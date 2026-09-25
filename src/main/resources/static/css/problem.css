@@ -315,37 +315,8 @@
    ============================================================ */
 
 /* Test result section. */
-.test-panel {
-    background: #181818;
-    border-top: 1px solid #333;
-}
 
-/* Test results heading. */
-.test-panel-header {
-    padding: 12px 18px;
-    font-size: 15px;
-    font-weight: 700;
-    color: #ddd;
-}
 
-/* Test output console. */
-#testConsole {
-    margin: 0;
-    min-height: 140px;
-    max-height: 220px;
-    padding: 14px 18px;
-    background: #0c0c0c;
-    border: none;
-    border-top: 1px solid #292929;
-    border-radius: 0;
-    color: #00ff66;
-    font-family: monospace;
-    font-size: 13px;
-    line-height: 1.5;
-    overflow: auto;
-    white-space: pre-wrap;
-    box-sizing: border-box;
-}
 
 
 /* ============================================================
