@@ -101,6 +101,17 @@ class EditorControllerTest {
   }
 
   @Test
+  void organizeImportsIsOptional() throws Exception {
+    when(service.format(eq(USER_ID), any())).thenReturn(new FormatResponse("x\n", true));
+
+    mockMvc.perform(post("/api/editor/format").with(user()).with(csrf())
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"code\":\"x\",\"kind\":\"METHOD_BODY\"}"))
+        .andExpect(status().isOk());
+    verify(service).format(USER_ID, new FormatRequest("x", SourceKind.METHOD_BODY, null));
+  }
+
+  @Test
   void syntaxErrorsBecome422WithTheMessage() throws Exception {
     when(service.format(eq(USER_ID), any()))
         .thenThrow(new UnformattableCodeException("Line 3: Syntax error"));

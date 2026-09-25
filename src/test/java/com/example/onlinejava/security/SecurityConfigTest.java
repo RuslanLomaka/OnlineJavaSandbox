@@ -103,7 +103,8 @@ class SecurityConfigTest {
                     "script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net"),
                 containsString("object-src 'none'"),
                 containsString("frame-ancestors 'none'"),
-                containsString("connect-src 'self'"))))
+                containsString("connect-src 'self'"),
+                containsString("worker-src 'self'"))))
         .andExpect(header().string("X-Frame-Options", "DENY"))
         .andExpect(header().string("Referrer-Policy", "strict-origin-when-cross-origin"));
   }

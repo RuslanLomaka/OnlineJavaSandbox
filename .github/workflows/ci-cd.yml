@@ -51,6 +51,16 @@ jobs:
           java-version: "21"
           cache: maven
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Editor autocomplete logic (static/js/editor/java-completions.js).
+      # Uses Node's built-in test runner: no npm install, no dependencies.
+      - name: JavaScript unit tests
+        run: node --test 'src/test/js/**/*.test.mjs'
+
       - name: Make Maven wrapper executable
         run: chmod +x mvnw
 

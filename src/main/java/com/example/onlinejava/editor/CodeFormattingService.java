@@ -55,7 +55,7 @@ public class CodeFormattingService {
     String outcome = "error";
     try {
       String code = request.code();
-      if (request.organizeImports() && request.kind() == SourceKind.CLASS) {
+      if (request.shouldOrganizeImports() && request.kind() == SourceKind.CLASS) {
         code = importOrganizer.organize(code);
       }
       code = formatter.format(code, request.kind());
@@ -67,7 +67,7 @@ public class CodeFormattingService {
       throw e;
     } finally {
       log.debug("format kind={} imports={} chars={} outcome={} took={}ms",
-          request.kind(), request.organizeImports(), request.code().length(), outcome,
+          request.kind(), request.shouldOrganizeImports(), request.code().length(), outcome,
           (System.nanoTime() - started) / 1_000_000);
     }
   }
