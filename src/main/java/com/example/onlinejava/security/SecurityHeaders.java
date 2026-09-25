@@ -19,6 +19,7 @@ public final class SecurityHeaders {
    *       emoji picker set styles at runtime.</li>
    *   <li>Images only from this site (screenshots) and GitHub avatars.</li>
    *   <li>{@code fetch()} only to this site.</li>
+   *   <li>Web workers (the code editor's) only from this site.</li>
    *   <li>No plugins, no framing, forms only post back to this site.</li>
    * </ul>
    */
@@ -29,6 +30,7 @@ public final class SecurityHeaders {
       "font-src 'self' https://cdnjs.cloudflare.com",
       "img-src 'self' data: blob: https://avatars.githubusercontent.com",
       "connect-src 'self'",
+      "worker-src 'self'",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

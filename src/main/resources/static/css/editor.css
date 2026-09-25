@@ -1,0 +1,78 @@
+/* Shared styles for the Monaco Java editor (sandbox and problem pages). */
+
+.code-editor {
+    height: 430px;
+    border: 1px solid #414650;
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
+}
+
+.code-editor:focus-within {
+    border-color: #6b7280;
+}
+
+.editor-status {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px 16px;
+    min-height: 28px;
+    padding: 5px 10px;
+    background: #1b1f25;
+    border: 1px solid #414650;
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    color: #8b949e;
+    font-size: 12px;
+}
+
+.editor-status-message[data-level="ok"] {
+    color: #73ff73;
+}
+
+.editor-status-message[data-level="error"] {
+    color: #ff7b72;
+}
+
+.editor-toolbar-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.editor-button {
+    padding: 9px 16px;
+    border: 1px solid #414650;
+    border-radius: 5px;
+    background: #20242b;
+    color: #e6e6e6;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.editor-button:hover {
+    border-color: #6b7280;
+}
+
+.editor-button.primary {
+    border-color: #238636;
+    background: #238636;
+    color: #ffffff;
+}
+
+.editor-button.primary:hover {
+    background: #2ea043;
+}
+
+.editor-button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* Shown until Monaco has loaded (or if it fails to). */
+.editor-loading {
+    padding: 16px;
+    color: #8b949e;
+}

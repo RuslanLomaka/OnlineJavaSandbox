@@ -252,20 +252,20 @@
    CODE EDITOR
    ============================================================ */
 
-/* Makes the editor use all available vertical space. */
-.editor-wrapper {
+/* The Monaco editor fills the remaining vertical space of the panel. */
+.problem-editor {
     flex: 1;
-    min-height: 0;
-    overflow: hidden;
-}
-
-/* Main CodeMirror editor. */
-.CodeMirror {
-    height: 100%;
     min-height: 520px;
+    height: auto;
     border: none;
     border-radius: 0;
-    font-size: 15px;
+}
+
+/* Status line under the editor, flush with the panel. */
+.solution-area .editor-status {
+    border-left: none;
+    border-right: none;
+    border-radius: 0;
 }
 
 
@@ -276,7 +276,9 @@
 /* Bottom execution bar. */
 .execution-bar {
     display: flex;
-    justify-content: flex-end;
+    flex-direction: row-reverse;
+    justify-content: flex-start;
+    gap: 10px;
     align-items: center;
     padding: 12px 18px;
     background: #202020;
