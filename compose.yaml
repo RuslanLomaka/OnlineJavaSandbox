@@ -27,7 +27,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
   rabbitmq:
-    image: rabbitmq:latest
+    image: rabbitmq:4.3.6
     container_name: rabbitmq
     hostname: rabbitmq
     restart: always
