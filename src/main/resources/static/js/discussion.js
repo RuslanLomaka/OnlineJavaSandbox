@@ -117,7 +117,7 @@
             {
                 name: "java-block",
                 action: insertJavaBlock,
-                className: "fa fa-file-code-o",
+                className: "fa-solid fa-file-code",
                 title: "Insert Java code block"
             },
             "quote", "unordered-list", "ordered-list", "|",
@@ -125,7 +125,7 @@
             {
                 name: "emoji",
                 action: toggleEmojiPicker,
-                className: "fa fa-smile-o",
+                className: "fa-solid fa-face-smile",
                 title: "Insert emoji"
             },
             "|", "preview"
