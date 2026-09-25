@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>PWA head fragment</title>
+    <!--
+        Lets the site be installed to a phone's home screen. See
+        /manifest.json and /icons/. apple-touch-icon is separate from the
+        manifest because iOS doesn't read manifest.json for its home-screen
+        icon.
+    -->
+    <th:block th:fragment="pwa">
+        <link rel="manifest" href="/manifest.json">
+        <meta name="theme-color" content="#20242b">
+        <link rel="icon" href="/icons/icon-192.png" type="image/png">
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    </th:block>
+</head>
+</html>
