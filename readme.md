@@ -16,8 +16,7 @@ Online Java Sandbox lets users:
 - solve structured Java problems;
 - see automatic test results;
 - edit in a VS Code-style editor (Monaco): rainbow brackets, indentation guides,
-  Java autocomplete, and IntelliJ shortcuts, including Ctrl+Alt+L to reformat
-  (server-side, IntelliJ style) and Ctrl+Alt+O to optimize imports;
+  Java autocomplete, and Ctrl+Alt+L to reformat, all computed in the browser;
 - discuss each problem with other users: threaded replies, Markdown with
   copyable code blocks, emoji, reactions and screenshots.
 
@@ -44,7 +43,7 @@ Current problems:
 - Docker
 - Docker Compose
 - RabbitMQ
-- Monaco editor (vendored) + Eclipse JDT formatter
+- Monaco editor + Prettier (prettier-plugin-java), vendored, running in the browser
 - Cloudflare Tunnel
 - Raspberry Pi
 - EasyMDE, highlight.js, DOMPurify, emoji-picker-element (discussion UI)

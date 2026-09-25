@@ -31,7 +31,6 @@
         <commonmark.version>0.30.0</commonmark.version>
         <owasp-html-sanitizer.version>20260922.1</owasp-html-sanitizer.version>
         <bucket4j.version>8.20.0</bucket4j.version>
-        <eclipse-jdt.version>3.47.0</eclipse-jdt.version>
     </properties>
     <dependencies>
         <dependency>
@@ -136,14 +135,6 @@
             <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
             <artifactId>owasp-java-html-sanitizer</artifactId>
             <version>${owasp-html-sanitizer.version}</version>
-        </dependency>
-
-        <!-- Java formatter and parser behind the editor's format / optimize-imports
-             shortcuts. Pure Java, so it also works on the Pi's JRE-only image. -->
-        <dependency>
-            <groupId>org.eclipse.jdt</groupId>
-            <artifactId>org.eclipse.jdt.core</artifactId>
-            <version>${eclipse-jdt.version}</version>
         </dependency>
 
         <!-- Per-user rate limiting for posts, reactions and uploads. -->

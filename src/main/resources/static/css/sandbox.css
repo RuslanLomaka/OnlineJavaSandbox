@@ -3,13 +3,3 @@
 .sandbox-editor {
     height: 460px;
 }
-
-#console {
-    min-height: 180px;
-    padding: 16px;
-    background: #000000;
-    color: #62ff62;
-    border: 1px solid #444;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-}

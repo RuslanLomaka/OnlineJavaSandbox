@@ -7,8 +7,7 @@
  *
  * Features: rainbow brackets, indentation/bracket guides, folding, sticky
  * scroll, minimap, autocomplete (java-completions.js), and IntelliJ keys:
- *   Ctrl+Alt+L   format (server: Eclipse JDT, IntelliJ style)
- *   Ctrl+Alt+O   optimize imports (whole-class editors only)
+ *   Ctrl+Alt+L   format (in the browser: Prettier + prettier-plugin-java)
  *   Ctrl+Enter   run            Ctrl+Space  suggestions
  *   Ctrl+D       duplicate line Ctrl+/      toggle comment
  *
@@ -16,16 +15,15 @@
  * reload to see [editor] debug logs. Errors are always logged and shown in
  * the status bar under the editor.
  *
- * Requires on the page: Monaco's loader.js (classic <script>) and csrf.js.
+ * Requires on the page: Monaco's loader.js (classic <script>).
+ * Everything here runs in the browser; the editor never calls the server.
  */
 import { suggestionsAt } from "./java-completions.js";
+import { formatJava } from "./java-formatter.js";
 
 const MONACO_BASE = "/vendor/monaco-editor-0.56.0/min/vs";
 const WORKER_URL = `${MONACO_BASE}/assets/editor.worker.js`;
-const FORMAT_URL = "/api/editor/format";
 
-/** Maps our kinds to the server's SourceKind enum. */
-const SERVER_KIND = { class: "CLASS", methodBody: "METHOD_BODY" };
 
 export const editorLog = (() => {
     let debug = false;
@@ -140,39 +138,24 @@ function registerJavaSupport(monaco) {
     monaco.languages.registerDocumentFormattingEditProvider("java", {
         async provideDocumentFormattingEdits(model) {
             const kind = modelKinds.get(model) ?? "class";
-            const formatted = await requestFormat(model.getValue(), kind, false);
+            const formatted = await formatCode(model.getValue(), kind);
             return formatted === null ? [] : [{ range: model.getFullModelRange(), text: formatted }];
         }
     });
 }
 
 /**
- * Asks the server to format code. Returns the new code, or null on failure
- * (the reason is shown in the status bar of the active editor).
+ * Formats code in the browser. Returns the new code, or null on failure (the
+ * reason, e.g. "Line 3, column 12: syntax error", is shown in the status bar).
  */
-async function requestFormat(code, kind, organizeImports) {
+async function formatCode(code, kind) {
     const started = performance.now();
     const status = activeStatus;
     try {
-        const response = await fetch(FORMAT_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Accept: "application/json", ...csrfHeaders() },
-            credentials: "same-origin",
-            body: JSON.stringify({ code, kind: SERVER_KIND[kind], organizeImports })
-        });
-        if (response.status === 401) {
-            throw new Error("Your session expired. Reload the page and sign in again.");
-        }
-        const body = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            // 422 carries the first syntax error, e.g. "Line 3: Syntax error ...".
-            throw new Error(body.detail || `Formatting failed (HTTP ${response.status})`);
-        }
-        editorLog.debug("formatted", { kind, organizeImports, ms: Math.round(performance.now() - started) });
-        status?.show(body.changed
-            ? (organizeImports ? "Imports optimized and code formatted" : "Code formatted")
-            : "Already formatted", "ok");
-        return body.code;
+        const formatted = await formatJava(code, kind);
+        editorLog.debug("formatted", { kind, ms: Math.round(performance.now() - started) });
+        status?.show(formatted === code ? "Already formatted" : "Code formatted", "ok");
+        return formatted;
     } catch (error) {
         editorLog.error("format failed", error);
         status?.show(error.message, "error");
@@ -184,9 +167,7 @@ let activeStatus = null;
 
 function createStatus(element, kind) {
     const hints = el("span", "editor-status-hints",
-        kind === "class"
-            ? "Ctrl+Alt+L format · Ctrl+Alt+O imports · Ctrl+Enter run · Ctrl+Space suggest"
-            : "Ctrl+Alt+L format · Ctrl+Enter run · Ctrl+Space suggest");
+        "Ctrl+Alt+L format · Ctrl+Enter run · Ctrl+Space suggest");
     const message = el("span", "editor-status-message", "");
     message.setAttribute("role", "status");
     element.replaceChildren(hints, message);
@@ -220,7 +201,7 @@ function el(tag, className, text) {
  * @param {function} [options.onRun] called on Ctrl+Enter
  * @param {HTMLElement} [options.statusElement] where hints/messages are shown
  * @returns {Promise<object>} small API: getValue, setValue, focus, format,
- *   organizeImports, onDidChange, monacoEditor
+ *   onDidChange, monacoEditor
  */
 export async function createJavaEditor(host, { value, kind = "class", onRun, statusElement }) {
     const monaco = await loadMonaco();
@@ -278,35 +259,13 @@ export async function createJavaEditor(host, { value, kind = "class", onRun, sta
         await editor.getAction("editor.action.formatDocument").run();
     };
 
-    const organizeImports = async () => {
-        activeStatus = status;
-        if (kind !== "class") {
-            return format();
-        }
-        const code = await requestFormat(editor.getValue(), kind, true);
-        if (code !== null && code !== editor.getValue()) {
-            editor.pushUndoStop();
-            editor.executeEdits("organize-imports", [{ range: model.getFullModelRange(), text: code }]);
-            editor.pushUndoStop();
-        }
-    };
-
     editor.addAction({
         id: "online-java.format",
-        label: "Format Code (IntelliJ style)",
+        label: "Format Code",
         keybindings: [KeyMod.CtrlCmd | KeyMod.Alt | KeyCode.KeyL],
         contextMenuGroupId: "1_modification",
         run: format
     });
-    if (kind === "class") {
-        editor.addAction({
-            id: "online-java.organize-imports",
-            label: "Optimize Imports",
-            keybindings: [KeyMod.CtrlCmd | KeyMod.Alt | KeyCode.KeyO],
-            contextMenuGroupId: "1_modification",
-            run: organizeImports
-        });
-    }
     if (onRun) {
         editor.addAction({
             id: "online-java.run",
@@ -326,7 +285,6 @@ export async function createJavaEditor(host, { value, kind = "class", onRun, sta
         setValue: (code) => editor.setValue(code),
         focus: () => editor.focus(),
         format,
-        organizeImports,
         onDidChange: (listener) => editor.onDidChangeModelContent(listener),
         monacoEditor: editor
     };
