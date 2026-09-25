@@ -16,7 +16,7 @@ services:
       - /tmp/online-java-runs:/tmp/online-java-runs
 
   postgres:
-    image: postgres:17
+    image: postgres:18
     container_name: online-java-postgres
     restart: unless-stopped
     env_file:
