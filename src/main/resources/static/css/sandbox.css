@@ -3,3 +3,9 @@
 .sandbox-editor {
     height: 460px;
 }
+
+@media (max-width: 850px) {
+    .sandbox-editor {
+        height: min(460px, 55vh);
+    }
+}
