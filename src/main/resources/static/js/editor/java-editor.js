@@ -138,8 +138,20 @@ function registerJavaSupport(monaco) {
     monaco.languages.registerDocumentFormattingEditProvider("java", {
         async provideDocumentFormattingEdits(model) {
             const kind = modelKinds.get(model) ?? "class";
+            const versionBeforeFormatting = model.getVersionId();
             const formatted = await formatCode(model.getValue(), kind);
-            return formatted === null ? [] : [{ range: model.getFullModelRange(), text: formatted }];
+            if (formatted === null) {
+                return [];
+            }
+            if (model.getVersionId() !== versionBeforeFormatting) {
+                // The model changed while formatting was in flight (e.g. the
+                // lazily-loaded formatter bundle was still downloading on the
+                // first use). Applying this result would silently overwrite
+                // whatever was typed in the meantime with stale text.
+                activeStatus?.show("Content changed while formatting — try again", "error");
+                return [];
+            }
+            return [{ range: model.getFullModelRange(), text: formatted }];
         }
     });
 }
