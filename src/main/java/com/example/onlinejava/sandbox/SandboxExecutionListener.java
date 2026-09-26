@@ -82,7 +82,16 @@ public class SandboxExecutionListener {
    *     logs too) carry it
    * @return the execution output, sent back as the reply
    */
-  @RabbitListener(queuesToDeclare = @Queue("sandbox.execution.requests"))
+  @RabbitListener(
+      queuesToDeclare = @Queue("sandbox.execution.requests"),
+      // Matches JavaRunnerService.MAX_CONCURRENT_EXECUTIONS: without this,
+      // Spring AMQP's default single-threaded consumer processes requests
+      // strictly one at a time, making that class's 2-permit semaphore
+      // unreachable (there's never more than one call to run() to contend
+      // for it) and queueing a second request's start behind the first
+      // request's own up-to-100s execution.
+      concurrency = "" + JavaRunnerService.MAX_CONCURRENT_EXECUTIONS
+  )
   String runNextRequestFromQueue(
       String sourceCode,
       @Header(AmqpHeaders.CORRELATION_ID) String correlationId
@@ -95,8 +104,12 @@ public class SandboxExecutionListener {
       try {
         result = javaRunnerService.run(sourceCode);
       } catch (Exception exception) {
-        log.error("Execution failed: {}", exception.getMessage());
-        result = "Execution failed: " + exception.getMessage();
+        // The full exception (message, stack trace) is only logged
+        // server-side, grep-able by correlationId -- it can contain
+        // internal detail (e.g. absolute host paths from an IOException
+        // writing the temp source file) that shouldn't reach the client.
+        log.error("Execution failed", exception);
+        result = "Execution failed due to an internal error. Please try again.";
       }
 
       return result;

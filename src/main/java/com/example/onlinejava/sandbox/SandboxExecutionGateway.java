@@ -33,6 +33,19 @@ public class SandboxExecutionGateway {
   private final RabbitTemplate rabbitTemplate;
 
   /**
+   * How long {@link #execute(String)} waits for a reply before giving
+   * up. Spring AMQP's own default (5 seconds) is meant for ordinary
+   * fast RPC calls; a submission can legitimately take up to
+   * {@link JavaRunnerService#EXECUTION_TIMEOUT_SECONDS} to execute,
+   * plus it may sit queued behind one other submission if both of
+   * {@link JavaRunnerService#MAX_CONCURRENT_EXECUTIONS} execution
+   * slots are already busy -- so the reply timeout has to cover one
+   * full execution cycle waited-for, plus this request's own.
+   */
+  private static final long REPLY_TIMEOUT_MILLIS =
+      (2L * JavaRunnerService.EXECUTION_TIMEOUT_SECONDS + 10) * 1000L;
+
+  /**
    * Creates the gateway.
    *
    * @param rabbitTemplate the Spring-managed AMQP client used to send
@@ -40,6 +53,7 @@ public class SandboxExecutionGateway {
    */
   public SandboxExecutionGateway(RabbitTemplate rabbitTemplate) {
     this.rabbitTemplate = rabbitTemplate;
+    this.rabbitTemplate.setReplyTimeout(REPLY_TIMEOUT_MILLIS);
   }
 
   /**
