@@ -193,7 +193,7 @@ public class DiscussionService {
     rateLimiter.check(userId, UserRateLimiter.Action.EDIT_OR_DELETE);
     final DiscussionPost post = findOwnLivePost(postId, userId);
     post.edit(body, clock.instant());
-   try {
+    try {
       // Build the response before the claim clears the persistence context
       // (the claim's bulk update flushes this edit first, which is also
       // where a concurrent edit of the same post would surface as an
@@ -206,6 +206,7 @@ public class DiscussionService {
       throw new ResponseStatusException(HttpStatus.CONFLICT,
           "This post changed elsewhere. Please reload and try again.");
     }
+  }
 
   /**
    * Soft-deletes a post. Only its author may do this; replies are kept.
