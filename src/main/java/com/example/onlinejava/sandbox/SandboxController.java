@@ -2,6 +2,7 @@ package com.example.onlinejava.sandbox;
 
 import com.example.onlinejava.problem.ProblemDefinition;
 import com.example.onlinejava.problem.ProblemRegistry;
+import com.example.onlinejava.problem.SolutionCodeGuard;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -89,6 +90,15 @@ public final class SandboxController {
       throw new ResponseStatusException(
           HttpStatus.NOT_FOUND,
           "Problem not found"
+      );
+    }
+
+    try {
+      SolutionCodeGuard.checkBalancedBraces(solutionCode);
+    } catch (IllegalArgumentException exception) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST,
+          exception.getMessage()
       );
     }
 
