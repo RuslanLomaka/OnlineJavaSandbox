@@ -3,6 +3,7 @@ package com.example.onlinejava.attachment;
 import com.example.onlinejava.ratelimit.UserRateLimiter;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -102,6 +103,18 @@ public class AttachmentService {
    */
   public void deleteForPost(final long postId) {
     repository.deleteByPost(postId);
+  }
+
+  /**
+   * Looks up who uploaded a set of attachments and which post (if any)
+   * currently claims each one, so a caller can decide whether a post
+   * embedding one of these ids is actually entitled to render it.
+   *
+   * @param ids attachment ids to look up
+   * @return ownership info for each id that still exists
+   */
+  public List<AttachmentRepository.AttachmentOwnership> findOwnership(final Set<UUID> ids) {
+    return ids.isEmpty() ? List.of() : repository.findOwnership(ids);
   }
 
   /**

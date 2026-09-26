@@ -2,6 +2,7 @@ package com.example.onlinejava.attachment;
 
 import java.time.Instant;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -52,4 +53,35 @@ public interface AttachmentRepository extends JpaRepository<Attachment, UUID> {
   @Modifying(flushAutomatically = true, clearAutomatically = true)
   @Query("delete from Attachment a where a.postId = :postId")
   int deleteByPost(@Param("postId") long postId);
+
+  /**
+   * Who uploaded a set of attachments, and which post (if any) currently
+   * claims each one. Used to decide whether a post embedding one of these
+   * ids is actually entitled to render it -- an id alone isn't enough,
+   * since {@link #claim} lets the same attachment be referenced by
+   * Markdown in more than one post's text even though only the first
+   * claimer actually owns it in the database.
+   *
+   * @param ids attachment ids to look up
+   * @return ownership info for each id that still exists
+   */
+  @Query("""
+      select new com.example.onlinejava.attachment.AttachmentRepository$AttachmentOwnership(
+          a.id, a.uploaderId, a.postId)
+      from Attachment a
+      where a.id in :ids
+      """)
+  List<AttachmentOwnership> findOwnership(@Param("ids") Collection<UUID> ids);
+
+  /**
+   * One attachment's uploader and current claiming post, as returned by
+   * {@link #findOwnership}.
+   *
+   * @param id attachment id
+   * @param uploaderId who uploaded it
+   * @param postId the post that currently claims it, or {@code null} if
+   *     still unclaimed
+   */
+  record AttachmentOwnership(UUID id, long uploaderId, Long postId) {
+  }
 }
