@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -184,13 +185,21 @@ public class DiscussionService {
    * @return the updated post
    */
   public PostView editPost(final long postId, final long userId, final String body) {
+    rateLimiter.check(userId, UserRateLimiter.Action.EDIT_OR_DELETE);
     final DiscussionPost post = findOwnLivePost(postId, userId);
     post.edit(body, clock.instant());
-    // Build the response before the claim clears the persistence context
-    // (the claim's bulk update flushes this edit first).
-    final PostView view = toView(post, userId, reactionViews(List.of(postId), userId));
-    claimAttachments(post, userId);
-    return view;
+    try {
+      // Build the response before the claim clears the persistence context
+      // (the claim's bulk update flushes this edit first, which is also
+      // where a concurrent edit of the same post would surface as an
+      // optimistic-lock failure).
+      final PostView view = toView(post, userId, reactionViews(List.of(postId), userId));
+      claimAttachments(post, userId);
+      return view;
+    } catch (ObjectOptimisticLockingFailureException exception) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
+          "This post changed elsewhere. Please reload and try again.");
+    }
   }
 
   /**
@@ -200,8 +209,17 @@ public class DiscussionService {
    * @param userId current user id
    */
   public void deletePost(final long postId, final long userId) {
-    findOwnLivePost(postId, userId).softDelete(clock.instant());
-    attachmentService.deleteForPost(postId);
+    rateLimiter.check(userId, UserRateLimiter.Action.EDIT_OR_DELETE);
+    final DiscussionPost post = findOwnLivePost(postId, userId);
+    post.softDelete(clock.instant());
+    try {
+      // The attachment bulk delete flushes this soft-delete first, same as
+      // the claim does in editPost -- see the comment there.
+      attachmentService.deleteForPost(postId);
+    } catch (ObjectOptimisticLockingFailureException exception) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
+          "This post changed elsewhere. Please reload and try again.");
+    }
   }
 
   /**

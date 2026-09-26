@@ -25,6 +25,8 @@ public class UserRateLimiter {
   public enum Action {
     /** Creating a post or reply. */
     POST(5, Duration.ofMinutes(1)),
+    /** Editing or deleting one of the user's own posts. */
+    EDIT_OR_DELETE(10, Duration.ofMinutes(1)),
     /** Adding or removing a reaction. */
     REACTION(30, Duration.ofMinutes(1)),
     /** Uploading a screenshot. */
