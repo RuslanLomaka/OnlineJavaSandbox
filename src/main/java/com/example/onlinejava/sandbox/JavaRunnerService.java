@@ -37,8 +37,14 @@ public class JavaRunnerService {
    * The maximum number of seconds to wait for Docker container
    * execution to complete. If the execution exceeds this timeout,
    * the container will be forcibly terminated.
+   *
+   * <p>Package-visible (not {@code private}) because
+   * {@link SandboxExecutionGateway} derives its RabbitMQ reply timeout
+   * from it -- that timeout must always exceed the longest an
+   * execution here can legitimately take, or callers time out on work
+   * that's still genuinely in progress.
    */
-  private static final int EXECUTION_TIMEOUT_SECONDS = 100;
+  static final int EXECUTION_TIMEOUT_SECONDS = 100;
 
   /**
    * The maximum number of bytes of combined stdout/stderr output that
@@ -58,8 +64,15 @@ public class JavaRunnerService {
    * the same time. Chosen to match how many {@code --cpus 2}
    * containers the host can run without CPU contention. Requests
    * beyond this limit wait their turn rather than being rejected.
+   *
+   * <p>Package-visible (not {@code private}) because
+   * {@link SandboxExecutionListener} sets its RabbitMQ consumer
+   * concurrency to match -- without that, Spring AMQP's default
+   * single-threaded consumer means at most one execution ever runs at
+   * once regardless of this limit, making the semaphore below
+   * unreachable.
    */
-  private static final int MAX_CONCURRENT_EXECUTIONS = 2;
+  static final int MAX_CONCURRENT_EXECUTIONS = 2;
 
   /**
    * Bounds how many executions run concurrently. Acquired before a
