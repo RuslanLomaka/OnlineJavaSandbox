@@ -86,12 +86,22 @@ public class MarkdownRenderer {
   /**
    * Renders Markdown to sanitized HTML.
    *
+   * <p>An image only survives if its id is in {@code allowedAttachmentIds}
+   * -- pointing at this site's own {@code /attachments/{uuid}} URL shape
+   * is necessary but not sufficient, since a post's Markdown text can
+   * reference an id it was never actually granted (another user's upload,
+   * or one already claimed by a different post; see
+   * {@link com.example.onlinejava.attachment.AttachmentRepository#claim}).
+   * The caller decides what's allowed for the specific post being
+   * rendered.
+   *
    * @param markdown user-written Markdown
+   * @param allowedAttachmentIds attachment ids this rendering may embed
    * @return HTML safe for {@code innerHTML}
    */
-  public String render(final String markdown) {
+  public String render(final String markdown, final Set<UUID> allowedAttachmentIds) {
     final Node document = parser.parse(markdown);
-    document.accept(new ForeignImageRemover());
+    document.accept(new UnauthorizedImageRemover(allowedAttachmentIds));
     return POLICY.sanitize(htmlRenderer.render(document)).trim();
   }
 
@@ -117,12 +127,22 @@ public class MarkdownRenderer {
   }
 
   /**
-   * Replaces images that don't point at an own attachment with their alt text.
+   * Replaces images that don't point at an attachment the caller allowed
+   * with their alt text.
    */
-  private static final class ForeignImageRemover extends AbstractVisitor {
+  private static final class UnauthorizedImageRemover extends AbstractVisitor {
+    private final Set<UUID> allowedAttachmentIds;
+
+    UnauthorizedImageRemover(final Set<UUID> allowedAttachmentIds) {
+      this.allowedAttachmentIds = allowedAttachmentIds;
+    }
+
     @Override
     public void visit(final Image image) {
-      if (!ATTACHMENT_URL.matcher(image.getDestination()).matches()) {
+      final Matcher matcher = ATTACHMENT_URL.matcher(image.getDestination());
+      final boolean allowed = matcher.matches()
+          && allowedAttachmentIds.contains(UUID.fromString(matcher.group(1)));
+      if (!allowed) {
         final StringBuilder alt = new StringBuilder();
         image.accept(new AbstractVisitor() {
           @Override
