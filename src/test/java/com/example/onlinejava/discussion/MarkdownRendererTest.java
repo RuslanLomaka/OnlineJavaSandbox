@@ -2,6 +2,7 @@ package com.example.onlinejava.discussion;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -13,13 +14,18 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 class MarkdownRendererTest {
 
-  private static final String ATTACHMENT = "/attachments/123e4567-e89b-12d3-a456-426614174000";
+  private static final UUID ATTACHMENT_ID =
+      UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+
+  private static final String ATTACHMENT = "/attachments/" + ATTACHMENT_ID;
+
+  private static final Set<UUID> NO_ATTACHMENTS = Set.of();
 
   private final MarkdownRenderer renderer = new MarkdownRenderer();
 
   @Test
   void rendersBasicFormatting() {
-    final String html = renderer.render("**bold** _it_ ~~gone~~ `x`");
+    final String html = renderer.render("**bold** _it_ ~~gone~~ `x`", NO_ATTACHMENTS);
 
     assertThat(html)
         .contains("<strong>bold</strong>")
@@ -30,7 +36,8 @@ class MarkdownRendererTest {
 
   @Test
   void keepsFencedCodeWithLanguageAndEscapesItsContent() {
-    final String html = renderer.render("```java\nif (a < b && c > d) {}\n```");
+    final String html = renderer.render(
+        "```java\nif (a < b && c > d) {}\n```", NO_ATTACHMENTS);
 
     assertThat(html)
         .contains("<pre><code class=\"language-java\">")
@@ -39,14 +46,15 @@ class MarkdownRendererTest {
 
   @Test
   void dropsMaliciousCodeLanguageClass() {
-    final String html = renderer.render("```java\" onmouseover=\"alert(1)\ncode\n```");
+    final String html = renderer.render(
+        "```java\" onmouseover=\"alert(1)\ncode\n```", NO_ATTACHMENTS);
 
     assertThat(html).doesNotContain("onmouseover=");
   }
 
   @Test
   void linksOpenSafelyInNewTab() {
-    final String html = renderer.render("[docs](https://example.com/x)");
+    final String html = renderer.render("[docs](https://example.com/x)", NO_ATTACHMENTS);
 
     assertThat(html)
         .contains("href=\"https://example.com/x\"")
@@ -56,29 +64,39 @@ class MarkdownRendererTest {
 
   @Test
   void autolinksBareUrls() {
-    assertThat(renderer.render("see https://example.com"))
+    assertThat(renderer.render("see https://example.com", NO_ATTACHMENTS))
         .contains("<a href=\"https://example.com\"");
   }
 
   @Test
   void rendersTables() {
-    assertThat(renderer.render("| a | b |\n|---|---|\n| 1 | 2 |"))
+    assertThat(renderer.render("| a | b |\n|---|---|\n| 1 | 2 |", NO_ATTACHMENTS))
         .contains("<table>").contains("<td>1</td>");
   }
 
   @Test
-  void keepsImagesThatPointAtOwnAttachments() {
-    final String html = renderer.render("![shot](" + ATTACHMENT + ")");
+  void keepsImagesThatAreInTheAllowedSet() {
+    final String html = renderer.render("![shot](" + ATTACHMENT + ")", Set.of(ATTACHMENT_ID));
 
     assertThat(html).contains("<img src=\"" + ATTACHMENT + "\"").contains("alt=\"shot\"");
+  }
+
+  @Test
+  void dropsAttachmentShapedImagesNotInTheAllowedSet() {
+    // Same URL shape as a real attachment, but its id isn't in the allowed
+    // set -- e.g. it belongs to someone else's upload, or a different
+    // post. This is the actual fix: a well-formed /attachments/{uuid} URL
+    // is necessary but not sufficient to render.
+    final String html = renderer.render("![shot](" + ATTACHMENT + ")", NO_ATTACHMENTS);
+
+    assertThat(html).doesNotContain("<img").contains("shot");
   }
 
   @Test
   void extractsReferencedAttachmentIds() {
     final String markdown = "![a](" + ATTACHMENT + ") and ![b](https://evil.example/x.png)";
 
-    assertThat(renderer.referencedAttachments(markdown))
-        .containsExactly(UUID.fromString("123e4567-e89b-12d3-a456-426614174000"));
+    assertThat(renderer.referencedAttachments(markdown)).containsExactly(ATTACHMENT_ID);
   }
 
   @ParameterizedTest
@@ -100,7 +118,7 @@ class MarkdownRendererTest {
       "<div style=\"background:url(javascript:alert(1))\">x</div>"
   })
   void neutralizesXssPayloads(final String payload) {
-    final String html = renderer.render(payload).toLowerCase();
+    final String html = renderer.render(payload, NO_ATTACHMENTS).toLowerCase();
 
     assertThat(html)
         .doesNotContain("<script")
@@ -118,6 +136,6 @@ class MarkdownRendererTest {
 
   @Test
   void blankInputRendersEmpty() {
-    assertThat(renderer.render("")).isEmpty();
+    assertThat(renderer.render("", NO_ATTACHMENTS)).isEmpty();
   }
 }

@@ -1,5 +1,6 @@
 package com.example.onlinejava.discussion;
 
+import com.example.onlinejava.attachment.AttachmentRepository.AttachmentOwnership;
 import com.example.onlinejava.attachment.AttachmentService;
 import com.example.onlinejava.discussion.PostReactionRepository.ReactionCount;
 import com.example.onlinejava.discussion.dto.AuthorView;
@@ -18,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -112,15 +115,17 @@ public class DiscussionService {
         : posts.findReplies(rootIds).stream()
             .collect(Collectors.groupingBy(p -> p.getThread().getId()));
 
-    final List<Long> allIds = new ArrayList<>(rootIds);
-    repliesByThread.values().forEach(list -> list.forEach(p -> allIds.add(p.getId())));
+    final List<DiscussionPost> allPosts = new ArrayList<>(roots.getContent());
+    repliesByThread.values().forEach(allPosts::addAll);
+    final List<Long> allIds = allPosts.stream().map(DiscussionPost::getId).toList();
     final Map<Long, List<ReactionView>> reactionsByPost = reactionViews(allIds, viewerId);
+    final Map<UUID, AttachmentOwnership> ownershipById = attachmentOwnership(allPosts);
 
     final List<ThreadView> threads = roots.stream()
         .map(root -> new ThreadView(
-            toView(root, viewerId, reactionsByPost),
+            toView(root, viewerId, reactionsByPost, ownershipById),
             repliesByThread.getOrDefault(root.getId(), List.of()).stream()
-                .map(reply -> toView(reply, viewerId, reactionsByPost))
+                .map(reply -> toView(reply, viewerId, reactionsByPost, ownershipById))
                 .toList()))
         .toList();
     return new ThreadPage(threads, page, roots.hasNext(), roots.getTotalElements());
@@ -171,7 +176,7 @@ public class DiscussionService {
         new DiscussionPost(slug, author, replyTo, request.body(), clock.instant()));
     // Build the response before claiming: the claim is a bulk update that
     // clears the persistence context, detaching the (lazy) entities.
-    final PostView view = toView(post, authorId, Map.of());
+    final PostView view = toView(post, authorId, Map.of(), attachmentOwnership(List.of(post)));
     claimAttachments(post, authorId);
     return view;
   }
@@ -188,19 +193,19 @@ public class DiscussionService {
     rateLimiter.check(userId, UserRateLimiter.Action.EDIT_OR_DELETE);
     final DiscussionPost post = findOwnLivePost(postId, userId);
     post.edit(body, clock.instant());
-    try {
+   try {
       // Build the response before the claim clears the persistence context
       // (the claim's bulk update flushes this edit first, which is also
       // where a concurrent edit of the same post would surface as an
       // optimistic-lock failure).
-      final PostView view = toView(post, userId, reactionViews(List.of(postId), userId));
+      final PostView view = toView(
+          post, userId, reactionViews(List.of(postId), userId), attachmentOwnership(List.of(post)));
       claimAttachments(post, userId);
       return view;
     } catch (ObjectOptimisticLockingFailureException exception) {
       throw new ResponseStatusException(HttpStatus.CONFLICT,
           "This post changed elsewhere. Please reload and try again.");
     }
-  }
 
   /**
    * Soft-deletes a post. Only its author may do this; replies are kept.
@@ -316,7 +321,8 @@ public class DiscussionService {
   private PostView toView(
       final DiscussionPost post,
       final long viewerId,
-      final Map<Long, List<ReactionView>> reactionsByPost
+      final Map<Long, List<ReactionView>> reactionsByPost,
+      final Map<UUID, AttachmentOwnership> ownershipById
   ) {
     final AppUser author = post.getAuthor();
     final DiscussionPost target = post.getReplyTo();
@@ -325,10 +331,14 @@ public class DiscussionService {
         target.getAuthor().getLogin(),
         target.isDeleted() ? "" : excerpt(target.getBodyMarkdown()));
     final boolean own = post.isAuthoredBy(viewerId);
+    final String html = post.isDeleted()
+        ? ""
+        : markdownRenderer.render(
+            post.getBodyMarkdown(), allowedAttachmentIds(post, ownershipById));
     return new PostView(
         post.getId(),
         new AuthorView(author.getLogin(), author.getDisplayName(), author.getAvatarUrl()),
-        post.isDeleted() ? "" : markdownRenderer.render(post.getBodyMarkdown()),
+        html,
         own && !post.isDeleted() ? post.getBodyMarkdown() : null,
         post.getCreatedAt(),
         post.getEditedAt(),
@@ -336,6 +346,51 @@ public class DiscussionService {
         own,
         replyRef,
         reactionsByPost.getOrDefault(post.getId(), List.of()));
+  }
+
+  /**
+   * Fetches ownership info for every attachment referenced anywhere across
+   * a batch of posts, in one query, so {@link #toView} never has to query
+   * per post.
+   *
+   * @param posts posts about to be rendered
+   * @return ownership info keyed by attachment id
+   */
+  private Map<UUID, AttachmentOwnership> attachmentOwnership(final List<DiscussionPost> posts) {
+    final Set<UUID> referencedIds = posts.stream()
+        .flatMap(post -> markdownRenderer.referencedAttachments(post.getBodyMarkdown()).stream())
+        .collect(Collectors.toSet());
+    return attachmentService.findOwnership(referencedIds).stream()
+        .collect(Collectors.toMap(AttachmentOwnership::id, ownership -> ownership));
+  }
+
+  /**
+   * The subset of a post's referenced attachment ids it's actually
+   * entitled to render: uploaded by the post's own author, and either not
+   * yet claimed by any post (the common case right after upload, before
+   * {@link #claimAttachments} runs) or already claimed by this exact post.
+   * Anything claimed by a different post -- or never uploaded by this
+   * author at all -- is excluded, even if the id is otherwise a
+   * well-formed {@code /attachments/{uuid}} reference in the Markdown.
+   *
+   * @param post the post being rendered
+   * @param ownershipById ownership info, from {@link #attachmentOwnership}
+   * @return attachment ids this post's rendering may embed
+   */
+  private Set<UUID> allowedAttachmentIds(
+      final DiscussionPost post,
+      final Map<UUID, AttachmentOwnership> ownershipById
+  ) {
+    final long authorId = post.getAuthor().getId();
+    final Long postId = post.getId();
+    return markdownRenderer.referencedAttachments(post.getBodyMarkdown()).stream()
+        .filter(id -> {
+          final AttachmentOwnership ownership = ownershipById.get(id);
+          return ownership != null
+              && ownership.uploaderId() == authorId
+              && (ownership.postId() == null || ownership.postId().equals(postId));
+        })
+        .collect(Collectors.toSet());
   }
 
   private static String excerpt(final String markdown) {

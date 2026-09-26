@@ -1,6 +1,7 @@
 package com.example.onlinejava.sandbox;
 
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -41,9 +42,33 @@ public class SandboxExecutionGateway {
    * {@link JavaRunnerService#MAX_CONCURRENT_EXECUTIONS} execution
    * slots are already busy -- so the reply timeout has to cover one
    * full execution cycle waited-for, plus this request's own.
+   *
+   * <p>That's only a valid bound because {@link #admissionSlots} caps
+   * how many requests can be waiting for a slot in the first place --
+   * without that cap, a big enough burst could make a request wait
+   * behind more than one full cycle (e.g. five requests arriving at
+   * once against two execution slots means the fifth waits through
+   * two cycles, not one), and no fixed timeout can cover an unbounded
+   * queue.
    */
   private static final long REPLY_TIMEOUT_MILLIS =
       (2L * JavaRunnerService.EXECUTION_TIMEOUT_SECONDS + 10) * 1000L;
+
+  /**
+   * How many requests may be in flight through this gateway at once --
+   * running or waiting for a free execution slot. Twice
+   * {@link JavaRunnerService#MAX_CONCURRENT_EXECUTIONS}: the two
+   * allowed to actually run, plus at most one more cycle's worth
+   * waiting behind them, matching exactly what
+   * {@link #REPLY_TIMEOUT_MILLIS} covers. A request that arrives once
+   * this many are already in flight is rejected immediately with a
+   * clear message instead of joining an ever-growing backlog that no
+   * timeout could bound.
+   */
+  private static final int MAX_IN_FLIGHT_REQUESTS =
+      2 * JavaRunnerService.MAX_CONCURRENT_EXECUTIONS;
+
+  private final Semaphore admissionSlots = new Semaphore(MAX_IN_FLIGHT_REQUESTS);
 
   /**
    * Creates the gateway.
@@ -60,16 +85,21 @@ public class SandboxExecutionGateway {
    * Sends {@code sourceCode} to the execution queue and blocks until
    * the listener on the other end replies with the console output.
    *
-   * <p>Two failure cases are handled gracefully instead of throwing:
-   * if RabbitMQ itself can't be reached, or if no reply arrives before
-   * the configured timeout, this returns a plain error message instead
-   * of an exception, so the caller always gets a {@code String} back.
+   * <p>Three failure cases are handled gracefully instead of throwing:
+   * if too many requests are already in flight, if RabbitMQ itself
+   * can't be reached, or if no reply arrives before the configured
+   * timeout, this returns a plain error message instead of an
+   * exception, so the caller always gets a {@code String} back.
    *
    * @param sourceCode complete Java source code to execute
    * @return the execution output, or a graceful error message if the
    *     request couldn't complete
    */
   String execute(String sourceCode) {
+    if (!admissionSlots.tryAcquire()) {
+      return "The sandbox is busy running other submissions. Please try again in a moment.";
+    }
+
     // A random ID unique to this one call. It travels inside the AMQP
     // message as the "correlation ID" so that when a reply eventually
     // comes back, Spring knows it belongs to *this* execute() call and
@@ -119,6 +149,7 @@ public class SandboxExecutionGateway {
     } catch (AmqpException exception) {
       return "Could not reach the execution queue.";
     } finally {
+      admissionSlots.release();
       MDC.remove("correlationId");
     }
   }
