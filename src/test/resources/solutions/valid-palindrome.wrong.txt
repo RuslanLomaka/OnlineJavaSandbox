@@ -1,0 +1,2 @@
+        // Wrong on purpose: does not ignore case or non-alphanumeric characters.
+        return new StringBuilder(s).reverse().toString().equals(s);

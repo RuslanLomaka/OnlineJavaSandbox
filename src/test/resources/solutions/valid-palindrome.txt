@@ -1,0 +1,21 @@
+        int[] codePoints = s.codePoints().toArray();
+        int left = 0;
+        int right = codePoints.length - 1;
+
+        while (left < right) {
+            while (left < right && !Character.isLetterOrDigit(codePoints[left])) {
+                left++;
+            }
+            while (left < right && !Character.isLetterOrDigit(codePoints[right])) {
+                right--;
+            }
+
+            if (Character.toLowerCase(codePoints[left]) != Character.toLowerCase(codePoints[right])) {
+                return false;
+            }
+
+            left++;
+            right--;
+        }
+
+        return true;
