@@ -4,6 +4,7 @@ import com.example.onlinejava.problem.algorithms.BinarySearchProblem;
 import com.example.onlinejava.problem.algorithms.BubbleSortProblem;
 import com.example.onlinejava.problem.algorithms.LongestUniqueSubstringProblem;
 import com.example.onlinejava.problem.datastructures.MaximumSubarrayProblem;
+import com.example.onlinejava.problem.datastructures.ReverseLinkedListProblem;
 import com.example.onlinejava.problem.datastructures.TwoSumProblem;
 import com.example.onlinejava.problem.datastructures.ValidPalindromeProblem;
 import com.example.onlinejava.problem.datastructures.ValidParenthesesProblem;
@@ -40,6 +41,7 @@ public class ProblemRegistry {
     register(new LongestUniqueSubstringProblem());
     register(new TwoSumProblem());
     register(new MaximumSubarrayProblem());
+    register(new ReverseLinkedListProblem());
     register(new ValidPalindromeProblem());
     register(new ValidParenthesesProblem());
   }
