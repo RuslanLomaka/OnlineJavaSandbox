@@ -106,15 +106,19 @@ public class ReverseLinkedListProblem implements ProblemDefinition {
 
                 try {
                     Node head = buildList(values);
+                    List<Node> originalNodes = collectNodes(head);
                     Node reversed = reverseList(head);
 
                     int[] expected = reverseArray(values);
-                    int[] actual = toArray(reversed);
+                    int[] actual = toArray(reversed, values.length);
 
-                    if (Arrays.equals(actual, expected)) {
-                        passedTests++;
-                        System.out.println("[PASS] " + name);
-                    } else {
+                    if (actual == null) {
+                        System.out.println("[FAIL] " + name);
+                        System.out.println(
+                                "       The returned list has more nodes than the input"
+                                        + " (does it contain a cycle?)"
+                        );
+                    } else if (!Arrays.equals(actual, expected)) {
                         System.out.println("[FAIL] " + name);
                         System.out.println(
                                 "       Expected: " + Arrays.toString(expected)
@@ -122,6 +126,15 @@ public class ReverseLinkedListProblem implements ProblemDefinition {
                         System.out.println(
                                 "       Actual:   " + Arrays.toString(actual)
                         );
+                    } else if (!isSameNodesReversed(originalNodes, reversed)) {
+                        System.out.println("[FAIL] " + name);
+                        System.out.println(
+                                "       Values match, but the list was built from new nodes;"
+                                        + " re-point the existing nodes instead"
+                        );
+                    } else {
+                        passedTests++;
+                        System.out.println("[PASS] " + name);
                     }
 
                 } catch (Exception exception) {
@@ -147,13 +160,29 @@ public class ReverseLinkedListProblem implements ProblemDefinition {
                 return dummy.next;
             }
 
-            private static int[] toArray(Node head) {
+            private static List<Node> collectNodes(Node head) {
+                List<Node> nodes = new ArrayList<>();
+
+                for (Node current = head; current != null; current = current.next) {
+                    nodes.add(current);
+                }
+
+                return nodes;
+            }
+
+            // Walks at most maxNodes nodes so a cyclic result can't loop forever;
+            // returns null if the list is longer than that.
+            private static int[] toArray(Node head, int maxNodes) {
                 List<Integer> values = new ArrayList<>();
 
                 Node current = head;
-                while (current != null) {
+                while (current != null && values.size() < maxNodes) {
                     values.add(current.val);
                     current = current.next;
+                }
+
+                if (current != null) {
+                    return null;
                 }
 
                 int[] result = new int[values.size()];
@@ -162,6 +191,21 @@ public class ReverseLinkedListProblem implements ProblemDefinition {
                 }
 
                 return result;
+            }
+
+            // Only called once toArray has confirmed the list has exactly
+            // originalNodes.size() nodes, so this walk is bounded too.
+            private static boolean isSameNodesReversed(List<Node> originalNodes, Node reversed) {
+                Node current = reversed;
+
+                for (int i = originalNodes.size() - 1; i >= 0; i--) {
+                    if (current != originalNodes.get(i)) {
+                        return false;
+                    }
+                    current = current.next;
+                }
+
+                return current == null;
             }
 
             private static int[] reverseArray(int[] values) {
