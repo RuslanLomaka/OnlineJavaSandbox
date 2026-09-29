@@ -6,6 +6,7 @@ import com.example.onlinejava.problem.algorithms.LongestUniqueSubstringProblem;
 import com.example.onlinejava.problem.datastructures.MaximumSubarrayProblem;
 import com.example.onlinejava.problem.datastructures.TwoSumProblem;
 import com.example.onlinejava.problem.datastructures.ValidPalindromeProblem;
+import com.example.onlinejava.problem.datastructures.ValidParenthesesProblem;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -40,6 +41,7 @@ public class ProblemRegistry {
     register(new TwoSumProblem());
     register(new MaximumSubarrayProblem());
     register(new ValidPalindromeProblem());
+    register(new ValidParenthesesProblem());
   }
 
   /**

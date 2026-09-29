@@ -1,0 +1,18 @@
+        // Wrong on purpose: never checks for leftover unclosed brackets, and
+        // silently accepts a closing bracket with nothing open to match it.
+        Deque<Character> stack = new ArrayDeque<>();
+
+        for (char c : s.toCharArray()) {
+            switch (c) {
+                case '(' -> stack.push(')');
+                case '[' -> stack.push(']');
+                case '{' -> stack.push('}');
+                default -> {
+                    if (!stack.isEmpty() && stack.pop() != c) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
