@@ -25,9 +25,30 @@ public class ReverseLinkedListProblem implements ProblemDefinition {
         Difficulty.EASY)
         .slug("reverse-linked-list")
         .description("Given the head of a singly linked list, reverse the list in place and "
-            + "return the new head.")
+            + "return the new head. The list is made of Node objects, a plain class with just "
+            + "two fields: int val (the node's value) and Node next (the following node, or null "
+            + "after the last one). head is the first node, or null if the list is empty. Node "
+            + "has no methods: no iterator(), hasNext() or size(). You move through the list by "
+            + "following next yourself, and change its order by reassigning next.")
         .methodSignature("public static Node reverseList(Node head)")
-        .starterCode("// Write your solution here")
+        .starterCode("""
+            // Node is already defined for you, like this:
+            //
+            //   static class Node {
+            //       int val;    // the value stored in this node
+            //       Node next;  // the next node, or null at the end of the list
+            //   }
+            //
+            // Walking the list looks like:
+            //
+            //   Node current = head;
+            //   while (current != null) {
+            //       // use current.val here
+            //       current = current.next;
+            //   }
+
+            // Write your solution here
+            """)
         .requirements(List.of(
             "Reverse the list by re-pointing existing nodes; do not build new nodes.",
             "Return the new head (the original tail).",
