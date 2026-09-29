@@ -30,8 +30,7 @@ public class ValidPalindromeProblem implements ProblemDefinition {
         .requirements(List.of(
             "Ignore characters that are not letters or digits.",
             "Treat uppercase and lowercase letters as equal.",
-            "An empty string or a string with no alphanumeric characters is a palindrome.",
-            "Do not build a reversed copy of the string for comparison."
+            "An empty string or a string with no alphanumeric characters is a palindrome."
         ))
         .examples(List.of(
             "Input: \"A man, a plan, a canal: Panama\" → Output: true",
@@ -122,6 +121,12 @@ public class ValidPalindromeProblem implements ProblemDefinition {
                         "single character",
                         "a",
                         true
+                );
+
+                test(
+                        "distinct supplementary-plane letters are not equal",
+                        "𐐀a𐐁",
+                        false
                 );
 
                 System.out.println();
