@@ -46,12 +46,12 @@ class ProblemRegistryTest {
     assertThat(byTopic.keySet()).containsExactly(Topic.values());
     byTopic.values().forEach(problems -> assertThat(problems)
         .isSortedAccordingTo(ProblemRegistry.DISPLAY_ORDER));
-    assertThat(byTopic.get(Topic.TREES)).isEmpty();
+    assertThat(byTopic.get(Topic.TREES)).hasSize(1);
   }
 
   @Test
   void getAllProblemsReturnsImmutableSnapshot() {
-    assertThat(registry.getAllProblems()).hasSize(8);
+    assertThat(registry.getAllProblems()).hasSize(9);
     final List<ProblemDefinition> snapshot = registry.getAllProblems();
     assertThatThrownBy(snapshot::clear)
         .isInstanceOf(UnsupportedOperationException.class);

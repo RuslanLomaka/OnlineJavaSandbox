@@ -30,7 +30,7 @@ class NavigationModelAdviceTest {
     assertThat(algorithms.topics().get(0).path()).isEqualTo("/problems/sorting");
     assertThat(algorithms.topics().get(0).problemCount()).isEqualTo(1);
     assertThat(sections.get(0).topics())
-        .filteredOn(topic -> topic.title().equals("Trees"))
+        .filteredOn(topic -> topic.title().equals("Graphs"))
         .singleElement()
         .satisfies(topic -> assertThat(topic.problemCount()).isZero());
   }
