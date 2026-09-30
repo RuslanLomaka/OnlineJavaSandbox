@@ -71,6 +71,9 @@ public class BinaryTreeMaxDepthProblem implements ProblemDefinition {
   @Override
   public String buildTestSource(String solutionCode) {
     return """
+        import java.util.ArrayList;
+        import java.util.List;
+
         public class Main {
 
             static class TreeNode {
@@ -114,6 +117,11 @@ public class BinaryTreeMaxDepthProblem implements ProblemDefinition {
                         3
                 );
                 test("only right child at root", node(1, null, leaf(2)), 2);
+                test(
+                        "right subtree deeper",
+                        node(1, leaf(2), node(3, null, leaf(4))),
+                        3
+                );
 
                 System.out.println();
                 System.out.println(
@@ -135,15 +143,43 @@ public class BinaryTreeMaxDepthProblem implements ProblemDefinition {
                 totalTests++;
 
                 try {
+                    List<TreeNode> nodes = new ArrayList<>();
+                    collectNodes(root, nodes);
+                    int[] values = new int[nodes.size()];
+                    TreeNode[] lefts = new TreeNode[nodes.size()];
+                    TreeNode[] rights = new TreeNode[nodes.size()];
+                    for (int i = 0; i < nodes.size(); i++) {
+                        values[i] = nodes.get(i).val;
+                        lefts[i] = nodes.get(i).left;
+                        rights[i] = nodes.get(i).right;
+                    }
+
                     int actual = maxDepth(root);
 
-                    if (actual == expected) {
-                        passedTests++;
-                        System.out.println("[PASS] " + name);
-                    } else {
+                    boolean unchanged = true;
+                    for (int i = 0; i < nodes.size(); i++) {
+                        TreeNode treeNode = nodes.get(i);
+                        if (treeNode.val != values[i]
+                                || treeNode.left != lefts[i]
+                                || treeNode.right != rights[i]) {
+                            unchanged = false;
+                            break;
+                        }
+                    }
+
+                    if (actual != expected) {
                         System.out.println("[FAIL] " + name);
                         System.out.println("       Expected: " + expected);
                         System.out.println("       Actual:   " + actual);
+                    } else if (!unchanged) {
+                        System.out.println("[FAIL] " + name);
+                        System.out.println(
+                                "       Depth is right, but the tree was modified;"
+                                        + " maxDepth must only read it"
+                        );
+                    } else {
+                        passedTests++;
+                        System.out.println("[PASS] " + name);
                     }
 
                 } catch (Exception exception) {
@@ -155,6 +191,15 @@ public class BinaryTreeMaxDepthProblem implements ProblemDefinition {
                                     + exception.getMessage()
                     );
                 }
+            }
+
+            private static void collectNodes(TreeNode treeNode, List<TreeNode> nodes) {
+                if (treeNode == null) {
+                    return;
+                }
+                nodes.add(treeNode);
+                collectNodes(treeNode.left, nodes);
+                collectNodes(treeNode.right, nodes);
             }
 
             private static TreeNode leaf(int val) {
