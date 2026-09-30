@@ -46,7 +46,7 @@ class ProblemRegistryTest {
     assertThat(byTopic.keySet()).containsExactly(Topic.values());
     byTopic.values().forEach(problems -> assertThat(problems)
         .isSortedAccordingTo(ProblemRegistry.DISPLAY_ORDER));
-    assertThat(byTopic.get(Topic.TREES)).isEmpty();
+    assertThat(byTopic.get(Topic.TREES)).hasSize(1);
   }
 
   @Test
