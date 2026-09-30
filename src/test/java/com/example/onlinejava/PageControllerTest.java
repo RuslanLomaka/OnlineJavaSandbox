@@ -9,7 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import com.example.onlinejava.problem.ProblemRegistry;
+import com.example.onlinejava.problem.Topic;
 import com.example.onlinejava.security.DevSecurityConfig;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -28,6 +30,9 @@ class PageControllerTest {
 
   @Autowired
   private MockMvc mockMvc;
+
+  @Autowired
+  private ProblemRegistry registry;
 
   @Test
   void rendersProblemAtCanonicalUrl() throws Exception {
@@ -73,7 +78,16 @@ class PageControllerTest {
 
   @Test
   void emptyTopicPageSaysComingSoon() throws Exception {
-    mockMvc.perform(get("/problems/graphs"))
+    // Picks whichever topic has no problems yet, so adding a problem to a
+    // topic never breaks this test; it only fails once every topic is filled.
+    final Topic emptyTopic = registry.problemsByTopic().entrySet().stream()
+        .filter(entry -> entry.getValue().isEmpty())
+        .map(Map.Entry::getKey)
+        .findFirst()
+        .orElseThrow(() -> new AssertionError(
+            "Every topic has a problem now; test 'Coming soon' with a stub registry"));
+
+    mockMvc.perform(get(emptyTopic.path()))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("Coming soon")));
   }

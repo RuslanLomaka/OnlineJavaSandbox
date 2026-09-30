@@ -3,6 +3,7 @@ package com.example.onlinejava.problem;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.support.StaticListableBeanFactory;
@@ -12,8 +13,10 @@ import org.springframework.beans.factory.support.StaticListableBeanFactory;
  */
 class NavigationModelAdviceTest {
 
+  private final ProblemRegistry registry = new ProblemRegistry();
+
   private final List<NavigationModelAdvice.NavSection> sections =
-      new NavigationModelAdvice(providerOf(new ProblemRegistry())).navSections();
+      new NavigationModelAdvice(providerOf(registry)).navSections();
 
   @Test
   void hasDataStructuresThenAlgorithms() {
@@ -29,10 +32,21 @@ class NavigationModelAdviceTest {
         .startsWith("Sorting", "Searching");
     assertThat(algorithms.topics().get(0).path()).isEqualTo("/problems/sorting");
     assertThat(algorithms.topics().get(0).problemCount()).isEqualTo(1);
-    assertThat(sections.get(0).topics())
-        .filteredOn(topic -> topic.title().equals("Graphs"))
-        .singleElement()
-        .satisfies(topic -> assertThat(topic.problemCount()).isZero());
+  }
+
+  @Test
+  void problemCountsMatchTheRegistryIncludingEmptyTopics() {
+    final Map<Topic, List<Problem>> byTopic = registry.problemsByTopic();
+
+    for (final Topic topic : Topic.values()) {
+      assertThat(sections)
+          .flatExtracting(NavigationModelAdvice.NavSection::topics)
+          .filteredOn(navTopic -> navTopic.title().equals(topic.title()))
+          .singleElement()
+          .satisfies(navTopic -> assertThat(navTopic.problemCount())
+              .as(topic.title())
+              .isEqualTo(byTopic.get(topic).size()));
+    }
   }
 
   @Test
