@@ -1,0 +1,8 @@
+        java.util.PriorityQueue<Integer> minHeap = new java.util.PriorityQueue<>();
+        for (int number : numbers) {
+            minHeap.offer(number);
+            if (minHeap.size() > k) {
+                minHeap.poll();
+            }
+        }
+        return minHeap.peek();

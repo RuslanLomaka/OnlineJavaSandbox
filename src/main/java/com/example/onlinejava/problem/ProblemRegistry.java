@@ -3,6 +3,7 @@ package com.example.onlinejava.problem;
 import com.example.onlinejava.problem.algorithms.BinarySearchProblem;
 import com.example.onlinejava.problem.algorithms.BubbleSortProblem;
 import com.example.onlinejava.problem.algorithms.LongestUniqueSubstringProblem;
+import com.example.onlinejava.problem.datastructures.KthLargestElementProblem;
 import com.example.onlinejava.problem.datastructures.MaximumSubarrayProblem;
 import com.example.onlinejava.problem.datastructures.ReverseLinkedListProblem;
 import com.example.onlinejava.problem.datastructures.TwoSumProblem;
@@ -44,6 +45,7 @@ public class ProblemRegistry {
     register(new ReverseLinkedListProblem());
     register(new ValidPalindromeProblem());
     register(new ValidParenthesesProblem());
+    register(new KthLargestElementProblem());
   }
 
   /**
