@@ -73,7 +73,7 @@ class PageControllerTest {
 
   @Test
   void emptyTopicPageSaysComingSoon() throws Exception {
-    mockMvc.perform(get("/problems/trees"))
+    mockMvc.perform(get("/problems/graphs"))
         .andExpect(status().isOk())
         .andExpect(content().string(containsString("Coming soon")));
   }
