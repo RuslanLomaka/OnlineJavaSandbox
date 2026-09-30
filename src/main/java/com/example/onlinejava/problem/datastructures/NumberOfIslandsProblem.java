@@ -110,6 +110,15 @@ public class NumberOfIslandsProblem implements ProblemDefinition {
                 );
 
                 test(
+                        "island reached only by moving left and up",
+                        new char[][]{
+                                {'0', '1', '0', '1'},
+                                {'1', '1', '1', '1'}
+                        },
+                        1
+                );
+
+                test(
                         "three separate islands",
                         new char[][]{
                                 {'1', '1', '0', '0', '0'},
