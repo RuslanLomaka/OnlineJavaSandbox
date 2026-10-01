@@ -51,7 +51,7 @@ class ProblemRegistryTest {
 
   @Test
   void getAllProblemsReturnsImmutableSnapshot() {
-    assertThat(registry.getAllProblems()).hasSize(10);
+    assertThat(registry.getAllProblems()).hasSize(11);
     final List<ProblemDefinition> snapshot = registry.getAllProblems();
     assertThatThrownBy(snapshot::clear)
         .isInstanceOf(UnsupportedOperationException.class);
