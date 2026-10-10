@@ -28,9 +28,9 @@
     </scm>
     <properties>
         <java.version>21</java.version>
-        <commonmark.version>0.30.0</commonmark.version>
+        <commonmark.version>0.30.1</commonmark.version>
         <owasp-html-sanitizer.version>20260924.2</owasp-html-sanitizer.version>
-        <bucket4j.version>8.20.0</bucket4j.version>
+        <bucket4j.version>8.21.0</bucket4j.version>
     </properties>
     <dependencies>
         <dependency>
