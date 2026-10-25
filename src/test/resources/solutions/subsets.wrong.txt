@@ -1,0 +1,11 @@
+        // Wrong on purpose: only returns single-element subsets, missing the
+        // empty subset and every subset of size two or more.
+        List<List<Integer>> result = new ArrayList<>();
+
+        for (int num : nums) {
+            List<Integer> single = new ArrayList<>();
+            single.add(num);
+            result.add(single);
+        }
+
+        return result;
