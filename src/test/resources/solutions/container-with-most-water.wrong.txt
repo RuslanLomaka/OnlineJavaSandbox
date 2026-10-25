@@ -1,0 +1,2 @@
+        int n = height.length;
+        return (n - 1) * Math.min(height[0], height[n - 1]);
