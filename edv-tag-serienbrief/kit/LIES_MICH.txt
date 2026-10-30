@@ -1,0 +1,19 @@
+EDV-Tag: Excel-Adressliste + Word-Serienbrief
+==============================================
+
+1_Fuer_Teilnehmende_auf_jeden_PC
+   Diesen Ordner auf jeden Schulungs-PC kopieren (lokal, z. B. "Dokumente\EDV-Tag").
+   Die drei Dateien muessen im selben Ordner bleiben.
+   - Bewerbungsliste.xlsx       Datenquelle (eine Zeile pro Firma, Beispieldaten sind erfunden)
+   - Anschreiben_Uebung.docx    Brief mit [Platzhaltern] zum Ueben
+   - Anschreiben_Loesung.docx   gleicher Brief, Seriendruckfelder schon eingefuegt (Plan B / Demo)
+
+2_Zum_Ausdrucken
+   - Anleitung_Serienbrief      Schritt-fuer-Schritt-Anleitung, 1x pro TN
+   - Feedbackbogen              Bewertung durch die TN am Ende, 1x pro TN
+
+3_Fuer_Trainer
+   - Ablaufplan_EDV-Tag         Zeitplan, Lernziele, Vorbereitung, Stolperfallen
+   - Beispiel_Ergebnis.pdf      So sehen die 5 Briefe nach "Fertig stellen und zusammenfuehren" aus
+
+WICHTIG: Vorher einmal komplett an einem Schulungs-PC durchspielen (Generalprobe).
