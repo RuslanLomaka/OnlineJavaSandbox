@@ -1,0 +1,47 @@
+/* Datenschutz page: same dark look as the login page, but set for long reading. */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #111111;
+    color: #e6e6e6;
+    font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.legal {
+    max-width: 46rem;
+    margin: 0 auto;
+    padding: 24px 16px 48px;
+    overflow-wrap: anywhere;
+}
+
+.legal h1 {
+    font-size: 1.6rem;
+    line-height: 1.25;
+    margin: 16px 0 4px;
+}
+
+.legal h2 {
+    font-size: 1.15rem;
+    margin: 32px 0 8px;
+}
+
+.legal a {
+    color: #73ff73;
+}
+
+.legal .meta,
+.legal-links {
+    color: #a9a9a9;
+}
+
+.legal li {
+    margin: 6px 0;
+}
+
+.legal-links {
+    margin-top: 48px;
+    font-size: 0.9rem;
+}

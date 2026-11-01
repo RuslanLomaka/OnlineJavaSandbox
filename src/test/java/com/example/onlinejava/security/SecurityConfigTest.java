@@ -6,6 +6,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.oauth2Login;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -46,6 +47,41 @@ class SecurityConfigTest {
 
   @MockitoBean
   private AppUserLoginService appUserLoginService;
+
+  /** One Impressum on the owner's course site covers all of their sites. */
+  private static final String IMPRESSUM_LINK =
+      "href=\"https://edv.ruslanlomaka.org/impressum/\"";
+
+  private static final String DATENSCHUTZ_LINK = "href=\"/datenschutz.html\"";
+
+  @Test
+  void anonymousUserCanReadPrivacyPolicy() throws Exception {
+    mockMvc.perform(get("/datenschutz.html"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(allOf(
+            containsString("1. Verantwortlicher"),
+            containsString(IMPRESSUM_LINK))));
+    mockMvc.perform(get("/css/legal.css"))
+        .andExpect(status().isOk());
+  }
+
+  @Test
+  void loginPageLinksToImpressumAndPrivacyPolicy() throws Exception {
+    mockMvc.perform(get("/index.html"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(allOf(
+            containsString(IMPRESSUM_LINK),
+            containsString(DATENSCHUTZ_LINK))));
+  }
+
+  @Test
+  void signedInPagesLinkToImpressumAndPrivacyPolicy() throws Exception {
+    mockMvc.perform(get("/sandbox").with(oauth2Login()))
+        .andExpect(status().isOk())
+        .andExpect(content().string(allOf(
+            containsString(IMPRESSUM_LINK),
+            containsString(DATENSCHUTZ_LINK))));
+  }
 
   @Test
   void anonymousUserIsRedirectedToLogin() throws Exception {
