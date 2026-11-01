@@ -41,3 +41,18 @@
             width: 22px;
             height: 22px;
         }
+
+        .login-legal {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 14px;
+            text-align: center;
+            color: #a9a9a9;
+            font-size: 13px;
+        }
+
+        .login-legal a {
+            color: inherit;
+        }
