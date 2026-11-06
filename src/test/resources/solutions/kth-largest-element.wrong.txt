@@ -1,0 +1,3 @@
+        int[] sorted = numbers.clone();
+        java.util.Arrays.sort(sorted);
+        return sorted[k - 1];
