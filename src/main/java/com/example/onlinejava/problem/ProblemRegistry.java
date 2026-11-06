@@ -4,6 +4,7 @@ import com.example.onlinejava.problem.algorithms.BinarySearchProblem;
 import com.example.onlinejava.problem.algorithms.BubbleSortProblem;
 import com.example.onlinejava.problem.algorithms.ContainerWithMostWaterProblem;
 import com.example.onlinejava.problem.algorithms.LongestUniqueSubstringProblem;
+import com.example.onlinejava.problem.algorithms.SubsetsProblem;
 import com.example.onlinejava.problem.datastructures.BinaryTreeMaxDepthProblem;
 import com.example.onlinejava.problem.datastructures.KthLargestElementProblem;
 import com.example.onlinejava.problem.datastructures.MaximumSubarrayProblem;
@@ -52,6 +53,7 @@ public class ProblemRegistry {
     register(new BinaryTreeMaxDepthProblem());
     register(new ContainerWithMostWaterProblem());
     register(new KthLargestElementProblem());
+    register(new SubsetsProblem());
   }
 
   /**
