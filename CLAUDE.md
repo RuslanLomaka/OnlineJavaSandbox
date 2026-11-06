@@ -50,7 +50,7 @@ The listener returns the result, which Spring routes back through RabbitMQ to th
 
 Two mutually exclusive `SecurityFilterChain` beans in `com.example.onlinejava.security`, selected by Spring profile:
 
-- `SecurityConfig` (`@Profile("!dev")`): OAuth2 login required for everything except `/`, `/index.html`, `/css/login.css`, `/oauth2/**`, `/login/**`; CSRF is disabled specifically for `/sandbox/run` (since it's called via `fetch`/JS, not a form).
+- `SecurityConfig` (`@Profile("!dev")`): OAuth2 login required for everything except `/`, `/index.html`, `/css/login.css`, `/oauth2/**`, `/login/**` and the privacy policy (`/datenschutz.html`, `/css/legal.css`); CSRF is disabled specifically for `/sandbox/run` (since it's called via `fetch`/JS, not a form).
 - `DevSecurityConfig` (`@Profile("dev")`): permits everything, disables CSRF entirely, and signs requests in as the `local-dev` user. Local-only.
 
 `user.CurrentUserModelAdvice` adds the signed-in user's login to every page model as `username` (used by the navbar).
@@ -83,7 +83,7 @@ Every problem is a `ProblemDefinition` class (in `problem.datastructures` or `pr
 - Controller tests use `@WebMvcTest`: `@Import(SecurityConfig.class)` for production rules, or `DevSecurityConfig` with profile `dev`.
 - Repository and service tests use `@DataJpaTest` + `@AutoConfigureTestDatabase(replace = NONE)` + `@Import(TestcontainersConfiguration.class)`, which runs a real PostgreSQL through Testcontainers, so Docker must be running.
 
-`fragments/navbar.html` is a shared Thymeleaf fragment included via `th:replace` across pages.
+`fragments/navbar.html` and `fragments/footer.html` (Impressum and Datenschutz links) are shared Thymeleaf fragments included via `th:replace` across pages. The privacy policy itself is the static page `static/datenschutz.html`; keep it in line with what the app stores.
 
 ### Code editor (Monaco), browser only
 

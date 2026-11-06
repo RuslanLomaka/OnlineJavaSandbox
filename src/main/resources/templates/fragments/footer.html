@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Footer fragment</title>
+</head>
+<body>
+
+<!--
+    Shared page footer with the legal links. The Impressum lives on the
+    owner's course site and covers all of their sites; the privacy policy is
+    a static page that is public (see SecurityConfig).
+-->
+<footer th:fragment="footer"
+        class="site-footer">
+    <a href="https://edv.ruslanlomaka.org/impressum/">Impressum</a>
+    <span aria-hidden="true">·</span>
+    <a th:href="@{/datenschutz.html}">Datenschutz</a>
+</footer>
+
+</body>
+</html>

@@ -403,3 +403,18 @@ body {
         box-shadow: none;
     }
 }
+
+/* ---------- Footer (Impressum / Datenschutz) ---------- */
+
+.site-footer {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 18px 16px 24px;
+    color: #a9a9a9;
+    font-size: 13px;
+}
+
+.site-footer a {
+    color: inherit;
+}

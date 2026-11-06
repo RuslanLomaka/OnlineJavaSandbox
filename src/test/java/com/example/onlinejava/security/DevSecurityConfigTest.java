@@ -32,4 +32,10 @@ class DevSecurityConfigTest {
         .andExpect(header().string("Content-Security-Policy",
             SecurityHeaders.CONTENT_SECURITY_POLICY));
   }
+
+  @Test
+  void devProfileServesPrivacyPolicy() throws Exception {
+    mockMvc.perform(get("/datenschutz.html"))
+        .andExpect(status().isOk());
+  }
 }
